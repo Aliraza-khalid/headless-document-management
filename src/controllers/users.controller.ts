@@ -16,7 +16,6 @@ export async function CreateUser(
     const hashedPassword = await hashPassword(validation.data.password);
     // const id = uuidv4();
 
-    console.log(hashedPassword, validation.data.password);
     const data = await createUser({
       ...validation.data,
       // id,

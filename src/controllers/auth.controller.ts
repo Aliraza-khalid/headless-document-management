@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { LoginDto } from "../dto/auth.dto";
 import { getUserByEmail } from "../servcies/users.service";
-import { generateToken } from "../servcies/auth.service";
+import { generateToken, verifyPassword } from "../servcies/auth.service";
 
 export async function Login(
   req: Request,
@@ -10,14 +10,24 @@ export async function Login(
 ): Promise<any> {
   try {
     const validation = LoginDto.safeParse(req.body);
-    if (!validation.success) return res.json(validation);
+    if (!validation.success) return res.status(400).json(validation);
 
-    const user = await getUserByEmail(req.body.email);
+    const { email, password } = validation.data;
+
+    const user = await getUserByEmail(email);
 
     if (!user)
       return res.json({
         success: false,
         message: "User Not Found",
+      });
+
+    const passwordMatch = await verifyPassword(password, user.password);
+
+    if (!passwordMatch)
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Credentials",
       });
 
     const token = generateToken({
@@ -30,6 +40,7 @@ export async function Login(
       success: true,
       data: {
         token,
+        user,
       },
     });
   } catch (error) {
