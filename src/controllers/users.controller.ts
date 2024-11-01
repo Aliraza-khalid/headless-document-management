@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
 import { createUser, getUserById } from "../servcies/users.service";
 import { CreateUserDto } from "../dto/users.dto";
 import { hashPassword } from "../servcies/auth.service";
@@ -14,11 +13,9 @@ export async function CreateUser(
     if (!validation.success) return res.json(validation);
 
     const hashedPassword = await hashPassword(validation.data.password);
-    // const id = uuidv4();
 
     const data = await createUser({
       ...validation.data,
-      // id,
       password: hashedPassword,
     });
 
