@@ -28,3 +28,6 @@ export const DocumentsUsersRelations = relations(DocumentsUsers, ({ one }) => ({
     references: [Documents.id],
   }),
 }));
+
+
+export type TDocumentsUsers = typeof DocumentsUsers.$inferSelect;

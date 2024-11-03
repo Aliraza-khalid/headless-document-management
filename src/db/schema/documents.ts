@@ -25,15 +25,15 @@ export const Documents = pgTable("documents", {
   size: integer().notNull(),
   metaData: jsonb(),
   isProtected: boolean().default(false),
-  uploadedBy: uuid()
+  authorId: uuid()
     .notNull()
     .references(() => Users.id),
   ...timestampColumns,
 });
 
 export const DocumentRelations = relations(Documents, ({ one, many }) => ({
-  uploadedBy: one(Users, {
-    fields: [Documents.uploadedBy],
+  author: one(Users, {
+    fields: [Documents.authorId],
     references: [Users.id],
   }),
   usersAuthorized: many(Users),

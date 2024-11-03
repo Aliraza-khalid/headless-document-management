@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { createDocument, getDocumentById } from "../servcies/documents.service";
 import { CreateDocumentDto } from "../dto/documents.dto";
+import crypto from "crypto";
+import { FILES_STORAGE } from "../servcies/storage.service";
 
 export async function CreateDocument(
   req: Request,
@@ -11,17 +13,18 @@ export async function CreateDocument(
     const validation = CreateDocumentDto.safeParse(req.body);
     if (!validation.success) return res.json(validation);
 
-    if(!req.file) return res.status(400).json({
-      success: false,
-      message: 'File Not Uploaded'
-    })
+    if (!req.file)
+      return res.status(400).json({
+        success: false,
+        message: "File Not Uploaded",
+      });
 
     const data = await createDocument({
       ...validation.data,
       data: req.file.buffer,
       size: req.file.size,
       mimeType: req.file.mimetype,
-      uploadedBy: req.user.userId,
+      authorId: req.user.userId,
     });
 
     return res.json({
@@ -33,19 +36,71 @@ export async function CreateDocument(
   }
 }
 
-export async function GetDocumentById(
+export async function GetDocumentLink(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<any> {
   try {
-    const { id } = req.params;
-    const document = await getDocumentById(id);
+    const documentId = req.params.documentId;
+    const userId = req.user.userId;
+
+    const document = await getDocumentById(documentId);
+
+    if (!document)
+      return res.status(404).json({
+        success: false,
+        message: "Document Not Found",
+      });
+
+    if (
+      document.authorId !== userId &&
+      !document.authorizedUsers.includes(userId)
+    )
+      return res.status(403).json({
+        success: false,
+        message: "User Not Authorized",
+      });
+
+    const linkId = crypto.randomBytes(16).toString("hex");
+    const expiresAt = Date.now() + 15 * 60 * 1000; //  15 minutes
+
+    FILES_STORAGE.set(linkId, { document, expiresAt });
+
+    const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${linkId}`;
 
     return res.json({
       success: true,
-      data: document,
+      data: {
+        downloadLink,
+      },
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function DownloadDocument(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  try {
+    const linkId = req.params.linkId;
+    const document = FILES_STORAGE.get(linkId);
+
+    if (!document || document.expiresAt < Date.now())
+      return res.status(404).json({
+        success: false,
+        message: "Invalid Link",
+      });
+
+    res.setHeader("Content-Type", document.document.mimeType);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${document.document.title}"`
+    );
+    res.send(document.document.data);
   } catch (error) {
     next(error);
   }
