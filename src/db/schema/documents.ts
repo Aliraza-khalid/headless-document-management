@@ -5,18 +5,25 @@ import {
   uuid,
   integer,
   boolean,
+  customType,
 } from "drizzle-orm/pg-core";
 import timestampColumns from "../../utils/timestampColumns";
 import { Users } from "./users";
 import { relations } from "drizzle-orm";
 
+const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
 export const Documents = pgTable("documents", {
   id: uuid().primaryKey().defaultRandom(),
   title: text().notNull(),
-  data: text().notNull().$type<Buffer>(),
+  data: bytea().notNull(),
   mimeType: text().notNull(),
   size: integer().notNull(),
-  metadata: jsonb(),
+  metaData: jsonb(),
   isProtected: boolean().default(false),
   uploadedBy: uuid()
     .notNull()

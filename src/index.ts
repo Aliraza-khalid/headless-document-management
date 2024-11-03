@@ -4,6 +4,7 @@ import UserRouter from "./routes/user.router";
 import AuthRouter from "./routes/auth.router";
 import JWTMiddleware from "./middlewares/JWT.middleware";
 import ErrorMiddleware from "./middlewares/Error.middleware";
+import DocumentRouter from "./routes/document.router";
 
 dotenv.config();
 const port = process.env.PORT!;
@@ -17,6 +18,8 @@ app.use("/auth", AuthRouter);
 app.use(JWTMiddleware);
 
 app.use("/users", UserRouter);
+
+app.use("/documents", DocumentRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server");

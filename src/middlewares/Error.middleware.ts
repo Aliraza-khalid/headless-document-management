@@ -8,6 +8,7 @@ export default function ErrorMiddleware(
 ): any {
   return res.status(500).json({
     success: false,
+    message: error.message,
     error,
   });
 }
