@@ -1,12 +1,12 @@
-import { createInsertSchema } from "drizzle-zod";
 import z, { array, boolean, object, string } from "zod";
-import { Documents } from "../db/schema/documents";
 
 export const CreateDocumentDTO = z.object({
   title: string(),
-  metadata: object({}).optional(),
+  metaData: z.record(z.string(), z.any()).optional(),
   isProtected: boolean().default(false),
   usersAuthorized: array(string().uuid()).optional(),
 });
 
-const CreateDocumentDAO = createInsertSchema(Documents, {});
+export const UpdateDocumentDTO = CreateDocumentDTO.partial();
+
+export type UpdateDocumentDTO = z.infer<typeof UpdateDocumentDTO>;

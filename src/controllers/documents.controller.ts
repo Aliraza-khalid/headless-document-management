@@ -3,8 +3,9 @@ import {
   createDocument,
   deleteDocumentByAuthor,
   getDocumentWithUsers,
+  updateDocumentByAuthor,
 } from "../servcies/documents.service";
-import { CreateDocumentDTO } from "../dto/documents.dto";
+import { CreateDocumentDTO, UpdateDocumentDTO } from "../dto/documents.dto";
 import crypto from "crypto";
 import { FILES_STORAGE } from "../servcies/storage.service";
 import { UserRole } from "../enum/UserRoleEnum";
@@ -108,6 +109,29 @@ export async function DownloadDocument(
       `attachment; filename="${document.document.title}"`
     );
     res.send(document.document.data);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function UpdateDocument(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  try {
+    const validation = UpdateDocumentDTO.safeParse(req.body);
+    if (!validation.success) return res.json(validation);
+
+    const userId = req.user.userId;
+    const documentId = req.params.documentId;
+
+    await updateDocumentByAuthor(documentId, userId, validation.data);
+
+    return res.json({
+      success: true,
+      message: "Document Updated",
+    });
   } catch (error) {
     next(error);
   }

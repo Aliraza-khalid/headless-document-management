@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import db from "../db/schema";
 import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
 import { DocumentsUsers } from "../db/schema/documentsUsers";
+import { UpdateDocumentDTO } from "../dto/documents.dto";
 
 export async function createDocument(
   documentData: NewDocument
@@ -59,17 +60,21 @@ export async function getDocumentWithUsers(
   }
 }
 
-export async function updateDocument(
-  id: string,
-  documentData: Partial<NewDocument>
-): Promise<DocumentDAO | undefined> {
+export async function updateDocumentByAuthor(
+  documentId: string,
+  authorId: string,
+  documentData: UpdateDocumentDTO
+): Promise<boolean> {
   try {
-    const updatedDocument = await db
+    const result = await db
       .update(Documents)
       .set({ ...documentData, updatedAt: new Date() })
-      .where(eq(Documents.id, id))
-      .returning();
-    return updatedDocument[0];
+      .where(
+        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
+      );
+
+    if (!result.rowCount) throw new Error("Cannot update document");
+    return true;
   } catch (error) {
     console.error("Error updating document:", error);
     throw error;
