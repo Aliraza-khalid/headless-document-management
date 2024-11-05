@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { createDocument, getDocumentById } from "../servcies/documents.service";
-import { CreateDocumentDto } from "../dto/documents.dto";
+import { createDocument, getDocumentWithUsers } from "../servcies/documents.service";
+import { CreateDocumentDTO } from "../dto/documents.dto";
 import crypto from "crypto";
 import { FILES_STORAGE } from "../servcies/storage.service";
 
@@ -10,7 +10,7 @@ export async function CreateDocument(
   next: NextFunction
 ): Promise<any> {
   try {
-    const validation = CreateDocumentDto.safeParse(req.body);
+    const validation = CreateDocumentDTO.safeParse(req.body);
     if (!validation.success) return res.json(validation);
 
     if (!req.file)
@@ -45,7 +45,7 @@ export async function GetDocumentLink(
     const documentId = req.params.documentId;
     const userId = req.user.userId;
 
-    const document = await getDocumentById(documentId);
+    const document = await getDocumentWithUsers(documentId);
 
     if (!document)
       return res.status(404).json({
@@ -55,7 +55,7 @@ export async function GetDocumentLink(
 
     if (
       document.authorId !== userId &&
-      !document.authorizedUsers.includes(userId)
+      !document.usersAuthorized?.includes(userId)
     )
       return res.status(403).json({
         success: false,

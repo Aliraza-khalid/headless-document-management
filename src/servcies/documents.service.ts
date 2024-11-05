@@ -1,12 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import db from "../db/schema";
-import { Documents, Document, NewDocument } from "../db/schema/documents";
-import { DocumentsUsers, TDocumentsUsers } from "../db/schema/documentsUsers";
+import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
+import { DocumentsUsers } from "../db/schema/documentsUsers";
 import { Users } from "../db/schema/users";
 
 export async function createDocument(
   documentData: NewDocument
-): Promise<Document> {
+): Promise<DocumentDAO> {
   try {
     const newDocument = await db
       .insert(Documents)
@@ -23,7 +23,7 @@ export async function createDocument(
   }
 }
 
-export async function getAllDocuments(): Promise<Document[]> {
+export async function getAllDocuments(): Promise<DocumentDAO[]> {
   try {
     return db.select().from(Documents);
   } catch (error) {
@@ -32,7 +32,9 @@ export async function getAllDocuments(): Promise<Document[]> {
   }
 }
 
-export async function getDocumentById(documentId: string) {
+export async function getDocumentWithUsers(
+  documentId: string
+): Promise<DocumentDAO> {
   try {
     const results = await db
       .select()
@@ -42,7 +44,7 @@ export async function getDocumentById(documentId: string) {
       .where(eq(DocumentsUsers.documentId, documentId));
 
     const document = {
-      ...results[0].documents,
+      ...results[0].documents!,
       authorizedUsers: results.map((r) => r.users?.id),
     };
 
@@ -53,43 +55,10 @@ export async function getDocumentById(documentId: string) {
   }
 }
 
-export async function getDocumentByAuthor(
-  id: string,
-  authorId: string
-): Promise<Document | undefined> {
-  try {
-    const document = await db
-      .select()
-      .from(Documents)
-      .where(and(eq(Documents.id, id), eq(Documents.authorId, authorId)));
-    return document[0];
-  } catch (error) {
-    console.error("Error fetching document:", error);
-    throw error;
-  }
-}
-
-export async function getDocumentByAuthorized(
-  id: string,
-  userId: string
-): Promise<Document | undefined> {
-  try {
-    const document = await db
-      .select()
-      .from(Documents)
-      .leftJoin(DocumentsUsers, eq(DocumentsUsers.userId, userId))
-      .where(eq(Documents.id, id));
-    return document[0].documents;
-  } catch (error) {
-    console.error("Error fetching document:", error);
-    throw error;
-  }
-}
-
 export async function updateDocument(
   id: string,
   documentData: Partial<NewDocument>
-): Promise<Document | undefined> {
+): Promise<DocumentDAO | undefined> {
   try {
     const updatedDocument = await db
       .update(Documents)
@@ -105,7 +74,7 @@ export async function updateDocument(
 
 export async function deleteDocument(
   id: string
-): Promise<Document | undefined> {
+): Promise<DocumentDAO | undefined> {
   try {
     const deletedDocument = await db
       .delete(Documents)

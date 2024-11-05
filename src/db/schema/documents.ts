@@ -39,5 +39,10 @@ export const DocumentRelations = relations(Documents, ({ one, many }) => ({
   usersAuthorized: many(Users),
 }));
 
-export type Document = typeof Documents.$inferSelect;
-export type NewDocument = typeof Documents.$inferInsert;
+export type DocumentDAO = typeof Documents.$inferSelect & {
+  usersAuthorized?: string[];
+};
+
+export type NewDocument = typeof Documents.$inferInsert & {
+  usersAuthorized?: string[];
+};
