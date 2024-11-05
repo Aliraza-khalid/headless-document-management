@@ -24,7 +24,7 @@ export const Documents = pgTable("documents", {
   mimeType: text().notNull(),
   size: integer().notNull(),
   metaData: jsonb(),
-  isProtected: boolean().default(false),
+  isProtected: boolean().notNull().default(false),
   authorId: uuid()
     .notNull()
     .references(() => Users.id),

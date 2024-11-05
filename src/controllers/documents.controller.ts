@@ -60,6 +60,7 @@ export async function GetDocumentLink(
 
     if (
       role !== UserRole.Enum.ADMIN &&
+      document.isProtected &&
       document.authorId !== userId &&
       !document.usersAuthorized?.includes(userId)
     )

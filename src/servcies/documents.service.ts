@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm";
 import db from "../db/schema";
 import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
 import { DocumentsUsers } from "../db/schema/documentsUsers";
-import { Users } from "../db/schema/users";
 
 export async function createDocument(
   documentData: NewDocument
@@ -46,7 +45,11 @@ export async function getDocumentWithUsers(
 
     const document = {
       ...results[0].documents!,
-      authorizedUsers: results.map((r) => r.documents_users?.userId),
+      usersAuthorized: results.reduce(
+        (acc, e) =>
+          e.documents_users ? [...acc, e.documents_users.userId] : acc,
+        [] as string[]
+      ),
     };
 
     return document;
