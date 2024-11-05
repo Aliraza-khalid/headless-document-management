@@ -34,18 +34,19 @@ export async function getAllDocuments(): Promise<DocumentDAO[]> {
 
 export async function getDocumentWithUsers(
   documentId: string
-): Promise<DocumentDAO> {
+): Promise<DocumentDAO | null> {
   try {
     const results = await db
       .select()
-      .from(DocumentsUsers)
-      .leftJoin(Users, eq(Users.id, DocumentsUsers.userId))
-      .leftJoin(Documents, eq(Documents.id, DocumentsUsers.documentId))
-      .where(eq(DocumentsUsers.documentId, documentId));
+      .from(Documents)
+      .leftJoin(DocumentsUsers, eq(Documents.id, DocumentsUsers.documentId))
+      .where(eq(Documents.id, documentId));
+
+    if (!results?.length) return null;
 
     const document = {
       ...results[0].documents!,
-      authorizedUsers: results.map((r) => r.users?.id),
+      authorizedUsers: results.map((r) => r.documents_users?.userId),
     };
 
     return document;

@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from "express";
-import { createDocument, getDocumentWithUsers } from "../servcies/documents.service";
+import {
+  createDocument,
+  getDocumentWithUsers,
+} from "../servcies/documents.service";
 import { CreateDocumentDTO } from "../dto/documents.dto";
 import crypto from "crypto";
 import { FILES_STORAGE } from "../servcies/storage.service";
+import { UserRole } from "../enum/UserRoleEnum";
 
 export async function CreateDocument(
   req: Request,
@@ -43,7 +47,7 @@ export async function GetDocumentLink(
 ): Promise<any> {
   try {
     const documentId = req.params.documentId;
-    const userId = req.user.userId;
+    const { userId, role } = req.user;
 
     const document = await getDocumentWithUsers(documentId);
 
@@ -54,6 +58,7 @@ export async function GetDocumentLink(
       });
 
     if (
+      role !== UserRole.Enum.ADMIN &&
       document.authorId !== userId &&
       !document.usersAuthorized?.includes(userId)
     )
