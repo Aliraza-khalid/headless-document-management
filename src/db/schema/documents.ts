@@ -24,7 +24,7 @@ export const Documents = pgTable("documents", {
   mimeType: text().notNull(),
   size: integer().notNull(),
   metaData: jsonb(),
-  isProtected: boolean().notNull().default(false),
+  isProtected: boolean().notNull().default(true),
   authorId: uuid()
     .notNull()
     .references(() => Users.id),
@@ -43,6 +43,4 @@ export type DocumentDAO = typeof Documents.$inferSelect & {
   usersAuthorized?: string[];
 };
 
-export type NewDocument = typeof Documents.$inferInsert & {
-  usersAuthorized?: string[];
-};
+export type NewDocument = typeof Documents.$inferInsert;

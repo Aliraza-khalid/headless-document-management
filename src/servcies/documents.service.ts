@@ -2,7 +2,10 @@ import { and, eq } from "drizzle-orm";
 import db from "../db/schema";
 import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
 import { DocumentsUsers } from "../db/schema/documentsUsers";
-import { UpdateDocumentDTO } from "../dto/documents.dto";
+import {
+  UpdateDocumentDTO,
+  UpdateDocumentPermissionsDTO,
+} from "../dto/documents.dto";
 
 export async function createDocument(
   documentData: NewDocument
@@ -74,6 +77,42 @@ export async function updateDocumentByAuthor(
       );
 
     if (!result.rowCount) throw new Error("Cannot update document");
+    return true;
+  } catch (error) {
+    console.error("Error updating document:", error);
+    throw error;
+  }
+}
+
+export async function updateDocumentPermissionsByAuthor(
+  documentId: string,
+  authorId: string,
+  data: UpdateDocumentPermissionsDTO
+): Promise<boolean> {
+  try {
+    const result = await db
+      .update(Documents)
+      .set({ ...data, updatedAt: new Date() })
+      .where(
+        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
+      );
+    if (!result.rowCount) throw new Error("Cannot update document");
+
+    if (data.usersAuthorized) {
+      await db
+        .delete(DocumentsUsers)
+        .where(eq(DocumentsUsers.documentId, documentId));
+    }
+
+    if (data.usersAuthorized?.length) {
+      await db.insert(DocumentsUsers).values(
+        data.usersAuthorized.map((userId) => ({
+          userId,
+          documentId,
+        }))
+      );
+    }
+
     return true;
   } catch (error) {
     console.error("Error updating document:", error);

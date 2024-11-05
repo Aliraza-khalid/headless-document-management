@@ -4,8 +4,9 @@ import {
   deleteDocumentByAuthor,
   getDocumentWithUsers,
   updateDocumentByAuthor,
+  updateDocumentPermissionsByAuthor,
 } from "../servcies/documents.service";
-import { CreateDocumentDTO, UpdateDocumentDTO } from "../dto/documents.dto";
+import { CreateDocumentDTO, UpdateDocumentDTO, UpdateDocumentPermissionsDTO } from "../dto/documents.dto";
 import crypto from "crypto";
 import { FILES_STORAGE } from "../servcies/storage.service";
 import { UserRole } from "../enum/UserRoleEnum";
@@ -131,6 +132,29 @@ export async function UpdateDocument(
     return res.json({
       success: true,
       message: "Document Updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function UpdateDocumentPermissions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  try {
+    const validation = UpdateDocumentPermissionsDTO.safeParse(req.body);
+    if (!validation.success) return res.json(validation);
+
+    const userId = req.user.userId;
+    const documentId = req.params.documentId;
+
+    await updateDocumentPermissionsByAuthor(documentId, userId, validation.data);
+
+    return res.json({
+      success: true,
+      message: "Document Permissions Updated",
     });
   } catch (error) {
     next(error);
