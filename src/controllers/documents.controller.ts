@@ -2,11 +2,17 @@ import { Request, Response, NextFunction } from "express";
 import {
   createDocument,
   deleteDocumentByAuthor,
+  getAllDocuments,
   getDocumentWithUsers,
   updateDocumentByAuthor,
   updateDocumentPermissionsByAuthor,
 } from "../servcies/documents.service";
-import { CreateDocumentDTO, UpdateDocumentDTO, UpdateDocumentPermissionsDTO } from "../dto/documents.dto";
+import {
+  CreateDocumentDTO,
+  DocumentsSearchParams,
+  UpdateDocumentDTO,
+  UpdateDocumentPermissionsDTO,
+} from "../dto/documents.dto";
 import crypto from "crypto";
 import { FILES_STORAGE } from "../servcies/storage.service";
 import { UserRole } from "../enum/UserRoleEnum";
@@ -33,6 +39,26 @@ export async function CreateDocument(
       mimeType: req.file.mimetype,
       authorId: req.user.userId,
     });
+
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function GetAllDocuments(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  try {
+    const validation = DocumentsSearchParams.safeParse(req.query);
+    if (!validation.success) return res.json(validation);
+
+    const data = await getAllDocuments(validation.data);
 
     return res.json({
       success: true,
@@ -150,7 +176,11 @@ export async function UpdateDocumentPermissions(
     const userId = req.user.userId;
     const documentId = req.params.documentId;
 
-    await updateDocumentPermissionsByAuthor(documentId, userId, validation.data);
+    await updateDocumentPermissionsByAuthor(
+      documentId,
+      userId,
+      validation.data
+    );
 
     return res.json({
       success: true,

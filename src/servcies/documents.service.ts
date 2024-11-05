@@ -1,8 +1,10 @@
-import { and, eq } from "drizzle-orm";
+import { SQL, and, eq, gte, ilike, lte } from "drizzle-orm";
 import db from "../db/schema";
 import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
 import { DocumentsUsers } from "../db/schema/documentsUsers";
 import {
+  DocumentResponseDTO,
+  DocumentsSearchParams,
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
@@ -26,9 +28,41 @@ export async function createDocument(
   }
 }
 
-export async function getAllDocuments(): Promise<DocumentDAO[]> {
+export async function getAllDocuments(
+  params: DocumentsSearchParams
+): Promise<DocumentResponseDTO[]> {
   try {
-    return db.select().from(Documents);
+    const {
+      searchFilter,
+      isProtected,
+      mimeType,
+      sizeGreaterThan,
+      sizeLessThan,
+    } = params;
+    const filters: SQL[] = [];
+
+    if (searchFilter) filters.push(ilike(Documents.title, `%${searchFilter}%`));
+    if (isProtected)
+      filters.push(eq(Documents.isProtected, isProtected === 'true'));
+    if (mimeType) filters.push(eq(Documents.mimeType, mimeType));
+    if (sizeGreaterThan)
+      filters.push(gte(Documents.size, Number(sizeGreaterThan)));
+    if (sizeLessThan) filters.push(lte(Documents.size, Number(sizeLessThan)));
+
+    const result = await db
+      .select()
+      .from(Documents)
+      .where(and(...filters));
+
+    return result.map((row) => ({
+      id: row.id,
+      title: row.title,
+      authorId: row.authorId,
+      size: row.size,
+      isProtected: row.isProtected,
+      mimeType: row.mimeType,
+      createdAt: row.createdAt,
+    }));
   } catch (error) {
     console.error("Error fetching Documents:", error);
     throw error;
