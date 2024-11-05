@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import {
   createDocument,
+  deleteDocumentByAuthor,
   getDocumentWithUsers,
 } from "../servcies/documents.service";
 import { CreateDocumentDTO } from "../dto/documents.dto";
@@ -106,6 +107,26 @@ export async function DownloadDocument(
       `attachment; filename="${document.document.title}"`
     );
     res.send(document.document.data);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function DeleteDocument(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
+  try {
+    const userId = req.user.userId;
+    const documentId = req.params.documentId;
+
+    await deleteDocumentByAuthor(documentId, userId);
+
+    return res.json({
+      success: true,
+      message: "Document Deleted",
+    });
   } catch (error) {
     next(error);
   }

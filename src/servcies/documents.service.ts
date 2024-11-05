@@ -73,15 +73,19 @@ export async function updateDocument(
   }
 }
 
-export async function deleteDocument(
-  id: string
-): Promise<DocumentDAO | undefined> {
+export async function deleteDocumentByAuthor(
+  documentId: string,
+  authorId: string
+): Promise<boolean> {
   try {
-    const deletedDocument = await db
+    const result = await db
       .delete(Documents)
-      .where(eq(Documents.id, id))
-      .returning();
-    return deletedDocument[0];
+      .where(
+        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
+      );
+
+    if (!result.rowCount) throw new Error("Cannot delete document");
+    return true;
   } catch (error) {
     console.error("Error deleting document:", error);
     throw error;
