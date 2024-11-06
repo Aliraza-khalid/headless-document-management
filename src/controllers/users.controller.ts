@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { createUser, getUserById } from "../servcies/users.service";
-import { CreateUserDto } from "../dto/users.dto";
+import { CreateUserDTO } from "../dto/users.dto";
 import { hashPassword } from "../servcies/auth.service";
+import { CustomError } from "../middlewares/error.middleware";
 
 export async function CreateUser(
   req: Request,
@@ -9,8 +10,13 @@ export async function CreateUser(
   next: NextFunction
 ): Promise<any> {
   try {
-    const validation = CreateUserDto.safeParse(req.body);
-    if (!validation.success) return res.json(validation);
+    const validation = CreateUserDTO.safeParse(req.body);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
     const hashedPassword = await hashPassword(validation.data.password);
 
