@@ -1,17 +1,7 @@
-import {
-  SQL,
-  and,
-  arrayOverlaps,
-  eq,
-  gte,
-  ilike,
-  lte,
-  or,
-  sql,
-} from "drizzle-orm";
+import { SQL, and, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import db from "../db/schema";
-import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
-import { DocumentsUsers } from "../db/schema/documentsUsers";
+import { Document, DocumentDAO, NewDocument } from "../db/schema/Document";
+import { DocumentUser } from "../db/schema/DocumentUser";
 import {
   DocumentResponseDTO,
   DocumentsSearchParams,
@@ -24,7 +14,7 @@ export async function createDocument(
 ): Promise<DocumentDAO> {
   try {
     const newDocument = await db
-      .insert(Documents)
+      .insert(Document)
       .values({
         ...documentData,
         createdAt: new Date(),
@@ -54,22 +44,22 @@ export async function getAllDocuments(
     if (searchFilter)
       filters.push(
         or(
-          ilike(Documents.title, `%${searchFilter}%`),
+          ilike(Document.title, `%${searchFilter}%`),
           sql`array_to_string(${
-            Documents.tags
+            Document.tags
           }, ' ') ILIKE ${`%${searchFilter}%`}`
         )
       );
     if (isProtected)
-      filters.push(eq(Documents.isProtected, isProtected === "true"));
-    if (mimeType) filters.push(eq(Documents.mimeType, mimeType));
+      filters.push(eq(Document.isProtected, isProtected === "true"));
+    if (mimeType) filters.push(eq(Document.mimeType, mimeType));
     if (sizeGreaterThan)
-      filters.push(gte(Documents.size, Number(sizeGreaterThan)));
-    if (sizeLessThan) filters.push(lte(Documents.size, Number(sizeLessThan)));
+      filters.push(gte(Document.size, Number(sizeGreaterThan)));
+    if (sizeLessThan) filters.push(lte(Document.size, Number(sizeLessThan)));
 
     const result = await db
       .select()
-      .from(Documents)
+      .from(Document)
       .where(and(...filters));
 
     return result.map((row) => ({
@@ -83,7 +73,7 @@ export async function getAllDocuments(
       createdAt: row.createdAt,
     }));
   } catch (error) {
-    console.error("Error fetching Documents:", error);
+    console.error("Error fetching Document:", error);
     throw error;
   }
 }
@@ -94,9 +84,9 @@ export async function getDocumentWithUsers(
   try {
     const results = await db
       .select()
-      .from(Documents)
-      .leftJoin(DocumentsUsers, eq(Documents.id, DocumentsUsers.documentId))
-      .where(eq(Documents.id, documentId));
+      .from(Document)
+      .leftJoin(DocumentUser, eq(Document.id, DocumentUser.documentId))
+      .where(eq(Document.id, documentId));
 
     if (!results?.length) return null;
 
@@ -123,11 +113,9 @@ export async function updateDocumentByAuthor(
 ): Promise<boolean> {
   try {
     const result = await db
-      .update(Documents)
+      .update(Document)
       .set({ ...documentData, updatedAt: new Date() })
-      .where(
-        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
-      );
+      .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
 
     if (!result.rowCount) throw new Error("Cannot update document");
     return true;
@@ -144,21 +132,19 @@ export async function updateDocumentPermissionsByAuthor(
 ): Promise<boolean> {
   try {
     const result = await db
-      .update(Documents)
+      .update(Document)
       .set({ ...data, updatedAt: new Date() })
-      .where(
-        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
-      );
+      .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
     if (!result.rowCount) throw new Error("Cannot update document");
 
     if (data.usersAuthorized) {
       await db
-        .delete(DocumentsUsers)
-        .where(eq(DocumentsUsers.documentId, documentId));
+        .delete(DocumentUser)
+        .where(eq(DocumentUser.documentId, documentId));
     }
 
     if (data.usersAuthorized?.length) {
-      await db.insert(DocumentsUsers).values(
+      await db.insert(DocumentUser).values(
         data.usersAuthorized.map((userId) => ({
           userId,
           documentId,
@@ -179,10 +165,8 @@ export async function deleteDocumentByAuthor(
 ): Promise<boolean> {
   try {
     const result = await db
-      .delete(Documents)
-      .where(
-        and(eq(Documents.id, documentId), eq(Documents.authorId, authorId))
-      );
+      .delete(Document)
+      .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
 
     if (!result.rowCount) throw new Error("Cannot delete document");
     return true;

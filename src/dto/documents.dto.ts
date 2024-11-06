@@ -1,5 +1,5 @@
 import z, { array, boolean, string } from "zod";
-import { DocumentDAO } from "../db/schema/documents";
+import { DocumentDAO } from "../db/schema/Document";
 
 export const CreateDocumentDTO = z
   .object({

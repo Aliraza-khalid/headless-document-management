@@ -8,7 +8,7 @@ import {
   customType,
 } from "drizzle-orm/pg-core";
 import timestampColumns from "../../utils/timestampColumns";
-import { Users } from "./users";
+import { User } from "./User";
 import { relations } from "drizzle-orm";
 
 const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
@@ -17,7 +17,7 @@ const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
   },
 });
 
-export const Documents = pgTable("documents", {
+export const Document = pgTable("documents", {
   id: uuid().primaryKey().defaultRandom(),
   title: text().notNull(),
   data: bytea().notNull(),
@@ -28,20 +28,20 @@ export const Documents = pgTable("documents", {
   isProtected: boolean().notNull().default(true),
   authorId: uuid()
     .notNull()
-    .references(() => Users.id),
+    .references(() => User.id),
   ...timestampColumns,
 });
 
-export const DocumentRelations = relations(Documents, ({ one, many }) => ({
-  author: one(Users, {
-    fields: [Documents.authorId],
-    references: [Users.id],
+export const DocumentRelations = relations(Document, ({ one, many }) => ({
+  author: one(User, {
+    fields: [Document.authorId],
+    references: [User.id],
   }),
-  usersAuthorized: many(Users),
+  usersAuthorized: many(User),
 }));
 
-export type DocumentDAO = typeof Documents.$inferSelect & {
+export type DocumentDAO = typeof Document.$inferSelect & {
   usersAuthorized?: string[];
 };
 
-export type NewDocument = typeof Documents.$inferInsert;
+export type NewDocument = typeof Document.$inferInsert;

@@ -1,4 +1,4 @@
-import { DocumentDAO } from "../db/schema/documents";
+import { DocumentDAO } from "../db/schema/Document";
 import { MemoryStorage } from "../types/storage";
 import crypto from "crypto";
 
