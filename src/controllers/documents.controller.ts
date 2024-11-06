@@ -13,9 +13,11 @@ import {
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
-import crypto from "crypto";
-import { FILES_STORAGE } from "../servcies/storage.service";
 import { UserRole } from "../enum/UserRoleEnum";
+import {
+  generateDocumentToken,
+  getDocumentFromStorage,
+} from "../servcies/storage.service";
 
 export async function CreateDocument(
   req: Request,
@@ -97,10 +99,7 @@ export async function GetDocumentLink(
         message: "User Not Authorized",
       });
 
-    const linkId = crypto.randomBytes(16).toString("hex");
-    const expiresAt = Date.now() + 15 * 60 * 1000; //  15 minutes
-
-    FILES_STORAGE.set(linkId, { document, expiresAt });
+    const linkId = generateDocumentToken(document);
 
     const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${linkId}`;
 
@@ -122,9 +121,9 @@ export async function DownloadDocument(
 ): Promise<any> {
   try {
     const linkId = req.params.linkId;
-    const document = FILES_STORAGE.get(linkId);
+    const document = getDocumentFromStorage(linkId);
 
-    if (!document || document.expiresAt < Date.now())
+    if (!document)
       return res.status(404).json({
         success: false,
         message: "Invalid Link",
