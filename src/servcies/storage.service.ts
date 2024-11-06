@@ -20,7 +20,7 @@ function cleanup() {
   }
 }
 
-export function getDocumentFromStorage(token: string): MemoryStorage | null {
+export function getDocumentFromStorage(token: string): DocumentDAO | null {
   const data = FILES_STORAGE.get(token);
 
   if (!data) {
@@ -32,7 +32,7 @@ export function getDocumentFromStorage(token: string): MemoryStorage | null {
     return null;
   }
 
-  return data;
+  return data.document;
 }
 
 export function generateDocumentToken(document: DocumentDAO): string {

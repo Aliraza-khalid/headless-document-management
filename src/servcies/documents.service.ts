@@ -8,12 +8,20 @@ import {
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
+import { documentModelToDto } from "../mappers/document.mapper";
+import { RequestUser } from "../types/request";
+import { UserRole } from "../enum/UserRoleEnum";
+import {
+  generateDocumentToken,
+  getDocumentFromStorage,
+} from "./storage.service";
+import { CustomError } from "../middlewares/error.middleware";
 
 export async function createDocument(
   documentData: NewDocument
-): Promise<DocumentDAO> {
+): Promise<DocumentResponseDTO> {
   try {
-    const newDocument = await db
+    const [newDocument] = await db
       .insert(Document)
       .values({
         ...documentData,
@@ -21,7 +29,7 @@ export async function createDocument(
         updatedAt: new Date(),
       })
       .returning();
-    return newDocument[0];
+    return documentModelToDto(newDocument);
   } catch (error) {
     console.error("Error creating document:", error);
     throw error;
@@ -62,25 +70,17 @@ export async function getAllDocuments(
       .from(Document)
       .where(and(...filters));
 
-    return result.map((row) => ({
-      id: row.id,
-      title: row.title,
-      authorId: row.authorId,
-      size: row.size,
-      isProtected: row.isProtected,
-      mimeType: row.mimeType,
-      tags: row.tags,
-      createdAt: row.createdAt,
-    }));
+    return result.map((row) => documentModelToDto(row));
   } catch (error) {
     console.error("Error fetching Document:", error);
     throw error;
   }
 }
 
-export async function getDocumentWithUsers(
-  documentId: string
-): Promise<DocumentDAO | null> {
+export async function getDocumentToken(
+  documentId: string,
+  user: RequestUser
+): Promise<string> {
   try {
     const results = await db
       .select()
@@ -88,7 +88,7 @@ export async function getDocumentWithUsers(
       .leftJoin(DocumentUser, eq(Document.id, DocumentUser.documentId))
       .where(eq(Document.id, documentId));
 
-    if (!results?.length) return null;
+    if (!results?.length) throw new CustomError("Document Not Found", 404);
 
     const document = {
       ...results[0].documents!,
@@ -99,9 +99,30 @@ export async function getDocumentWithUsers(
       ),
     };
 
-    return document;
+    if (
+      user.role !== UserRole.Enum.ADMIN &&
+      document.isProtected &&
+      document.authorId !== user.userId &&
+      !document.usersAuthorized?.includes(user.userId)
+    )
+      throw new CustomError("User Not Authorized", 403);
+
+    return generateDocumentToken(document);
   } catch (error) {
     console.error("Error fetching document:", error);
+    throw error;
+  }
+}
+
+export async function downloadDocumentByLink(
+  token: string
+): Promise<DocumentDAO> {
+  try {
+    const document = getDocumentFromStorage(token);
+    if (!document) throw new CustomError("Invalid Document Link", 404);
+    return document;
+  } catch (error) {
+    console.error("Error downloading document:", error);
     throw error;
   }
 }

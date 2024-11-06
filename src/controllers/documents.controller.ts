@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import {
   createDocument,
   deleteDocumentByAuthor,
+  downloadDocumentByLink,
   getAllDocuments,
-  getDocumentWithUsers,
+  getDocumentToken,
   updateDocumentByAuthor,
   updateDocumentPermissionsByAuthor,
 } from "../servcies/documents.service";
@@ -13,11 +14,7 @@ import {
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
-import { UserRole } from "../enum/UserRoleEnum";
-import {
-  generateDocumentToken,
-  getDocumentFromStorage,
-} from "../servcies/storage.service";
+import { CustomError } from "../middlewares/error.middleware";
 
 export async function CreateDocument(
   req: Request,
@@ -26,7 +23,12 @@ export async function CreateDocument(
 ): Promise<any> {
   try {
     const validation = CreateDocumentDTO.safeParse(req.body);
-    if (!validation.success) return res.json(validation);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
     if (!req.file)
       return res.status(400).json({
@@ -58,7 +60,12 @@ export async function GetAllDocuments(
 ): Promise<any> {
   try {
     const validation = DocumentsSearchParams.safeParse(req.query);
-    if (!validation.success) return res.json(validation);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
     const data = await getAllDocuments(validation.data);
 
@@ -78,30 +85,10 @@ export async function GetDocumentLink(
 ): Promise<any> {
   try {
     const documentId = req.params.documentId;
-    const { userId, role } = req.user;
 
-    const document = await getDocumentWithUsers(documentId);
+    const token = await getDocumentToken(documentId, req.user);
 
-    if (!document)
-      return res.status(404).json({
-        success: false,
-        message: "Document Not Found",
-      });
-
-    if (
-      role !== UserRole.Enum.ADMIN &&
-      document.isProtected &&
-      document.authorId !== userId &&
-      !document.usersAuthorized?.includes(userId)
-    )
-      return res.status(403).json({
-        success: false,
-        message: "User Not Authorized",
-      });
-
-    const linkId = generateDocumentToken(document);
-
-    const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${linkId}`;
+    const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${token}`;
 
     return res.json({
       success: true,
@@ -121,20 +108,14 @@ export async function DownloadDocument(
 ): Promise<any> {
   try {
     const linkId = req.params.linkId;
-    const document = getDocumentFromStorage(linkId);
+    const document = await downloadDocumentByLink(linkId);
 
-    if (!document)
-      return res.status(404).json({
-        success: false,
-        message: "Invalid Link",
-      });
-
-    res.setHeader("Content-Type", document.document.mimeType);
+    res.setHeader("Content-Type", document.mimeType);
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${document.document.title}"`
+      `attachment; filename="${document.title}"`
     );
-    res.send(document.document.data);
+    res.send(document.data);
   } catch (error) {
     next(error);
   }
@@ -147,7 +128,12 @@ export async function UpdateDocument(
 ): Promise<any> {
   try {
     const validation = UpdateDocumentDTO.safeParse(req.body);
-    if (!validation.success) return res.json(validation);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
     const userId = req.user.userId;
     const documentId = req.params.documentId;
@@ -170,7 +156,12 @@ export async function UpdateDocumentPermissions(
 ): Promise<any> {
   try {
     const validation = UpdateDocumentPermissionsDTO.safeParse(req.body);
-    if (!validation.success) return res.json(validation);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
     const userId = req.user.userId;
     const documentId = req.params.documentId;
