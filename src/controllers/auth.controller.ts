@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { LoginDto } from "../dto/auth.dto";
-import { getUserByEmail } from "../servcies/users.service";
-import { generateToken, verifyPassword } from "../servcies/auth.service";
+import { LoginDTO } from "../dto/auth.dto";
+import { login } from "../servcies/auth.service";
+import { CustomError } from "../middlewares/error.middleware";
 
 export async function Login(
   req: Request,
@@ -9,39 +9,19 @@ export async function Login(
   next: NextFunction
 ): Promise<any> {
   try {
-    const validation = LoginDto.safeParse(req.body);
-    if (!validation.success) return res.status(400).json(validation);
+    const validation = LoginDTO.safeParse(req.body);
+    if (!validation.success)
+      throw new CustomError(
+        validation.error.issues[0].message,
+        400,
+        validation.error.issues
+      );
 
-    const { email, password } = validation.data;
-
-    const user = await getUserByEmail(email);
-
-    if (!user)
-      return res.json({
-        success: false,
-        message: "User Not Found",
-      });
-
-    const passwordMatch = await verifyPassword(password, user.password);
-
-    if (!passwordMatch)
-      return res.status(401).json({
-        success: false,
-        message: "Invalid Credentials",
-      });
-
-    const token = generateToken({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    const data = await login(validation.data);
 
     return res.json({
       success: true,
-      data: {
-        token,
-        user,
-      },
+      data,
     });
   } catch (error) {
     next(error);
