@@ -4,7 +4,8 @@ import { DocumentDAO } from "../db/schema/documents";
 export const CreateDocumentDTO = z
   .object({
     title: string(),
-    metaData: z.record(z.string(), z.any()).optional(),
+    tags: z.array(string()).optional(),
+    metaData: z.record(string(), z.any()).optional(),
   })
   .strict();
 
@@ -46,4 +47,5 @@ export type DocumentResponseDTO = Pick<
   | "authorId"
   | "mimeType"
   | "size"
+  | "tags"
 >;

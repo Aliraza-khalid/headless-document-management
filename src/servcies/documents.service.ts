@@ -1,4 +1,14 @@
-import { SQL, and, eq, gte, ilike, lte } from "drizzle-orm";
+import {
+  SQL,
+  and,
+  arrayOverlaps,
+  eq,
+  gte,
+  ilike,
+  lte,
+  or,
+  sql,
+} from "drizzle-orm";
 import db from "../db/schema";
 import { Documents, DocumentDAO, NewDocument } from "../db/schema/documents";
 import { DocumentsUsers } from "../db/schema/documentsUsers";
@@ -39,11 +49,19 @@ export async function getAllDocuments(
       sizeGreaterThan,
       sizeLessThan,
     } = params;
-    const filters: SQL[] = [];
+    const filters: (SQL | undefined)[] = [];
 
-    if (searchFilter) filters.push(ilike(Documents.title, `%${searchFilter}%`));
+    if (searchFilter)
+      filters.push(
+        or(
+          ilike(Documents.title, `%${searchFilter}%`),
+          sql`array_to_string(${
+            Documents.tags
+          }, ' ') ILIKE ${`%${searchFilter}%`}`
+        )
+      );
     if (isProtected)
-      filters.push(eq(Documents.isProtected, isProtected === 'true'));
+      filters.push(eq(Documents.isProtected, isProtected === "true"));
     if (mimeType) filters.push(eq(Documents.mimeType, mimeType));
     if (sizeGreaterThan)
       filters.push(gte(Documents.size, Number(sizeGreaterThan)));
@@ -61,6 +79,7 @@ export async function getAllDocuments(
       size: row.size,
       isProtected: row.isProtected,
       mimeType: row.mimeType,
+      tags: row.tags,
       createdAt: row.createdAt,
     }));
   } catch (error) {

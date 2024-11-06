@@ -23,6 +23,7 @@ export const Documents = pgTable("documents", {
   data: bytea().notNull(),
   mimeType: text().notNull(),
   size: integer().notNull(),
+  tags: text().array().default([]),
   metaData: jsonb(),
   isProtected: boolean().notNull().default(true),
   authorId: uuid()
