@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { GetUser, CreateUser, GetUserProfile } from "../controllers/users.controller";
-import AdminMiddleware from "../middlewares/Admin.middleware";
+import adminMiddleware from "../middlewares/admin.middleware";
 
-const UserRouter = Router();
+const userRouter = Router();
 
-UserRouter.post("/", AdminMiddleware, CreateUser);
-UserRouter.get("/profile", GetUserProfile);
-UserRouter.get("/:userId", AdminMiddleware, GetUser);
+userRouter.post("/", adminMiddleware, CreateUser);
+userRouter.get("/profile", GetUserProfile);
+userRouter.get("/:userId", adminMiddleware, GetUser);
 
-export default UserRouter;
+export default userRouter;

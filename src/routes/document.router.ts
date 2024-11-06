@@ -10,14 +10,14 @@ import {
 } from "../controllers/documents.controller";
 import Multer from "../servcies/multer.service";
 
-const DocumentRouter = Router();
+const documentRouter = Router();
 
-DocumentRouter.post("/", Multer.single("file"), CreateDocument);
-DocumentRouter.get("/:documentId", GetDocumentLink);
-DocumentRouter.get("/download/:linkId", DownloadDocument);
-DocumentRouter.get("/", GetAllDocuments);
-DocumentRouter.put("/permissions/:documentId", UpdateDocumentPermissions);
-DocumentRouter.patch("/:documentId", UpdateDocument);
-DocumentRouter.delete("/:documentId", DeleteDocument);
+documentRouter.post("/", Multer.single("file"), CreateDocument);
+documentRouter.get("/:documentId", GetDocumentLink);
+documentRouter.get("/download/:linkId", DownloadDocument);
+documentRouter.get("/", GetAllDocuments);
+documentRouter.put("/permissions/:documentId", UpdateDocumentPermissions);
+documentRouter.patch("/:documentId", UpdateDocument);
+documentRouter.delete("/:documentId", DeleteDocument);
 
-export default DocumentRouter;
+export default documentRouter;
