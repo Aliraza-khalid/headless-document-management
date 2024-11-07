@@ -5,7 +5,7 @@ export default function JWTMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-): any {
+) {
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
@@ -14,7 +14,7 @@ export default function JWTMiddleware(
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    req.user = decoded;
+    req.user = decoded as Request["user"];
     next();
   } catch (error) {
     res.status(401).json({ error: "Invalid Auth Token" });
