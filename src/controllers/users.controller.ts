@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { createUser, getUserById } from "../servcies/users.service";
 import { CreateUserDTO } from "../dto/users.dto";
-import { hashPassword } from "../servcies/auth.service";
 import { CustomError } from "../middlewares/error.middleware";
 
 export async function CreateUser(
@@ -18,12 +17,7 @@ export async function CreateUser(
         validation.error.issues
       );
 
-    const hashedPassword = await hashPassword(validation.data.password);
-
-    const data = await createUser({
-      ...validation.data,
-      password: hashedPassword,
-    });
+    const data = await createUser(validation.data);
 
     return res.json({
       success: true,

@@ -9,13 +9,13 @@ import {
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
 import { documentModelToDto } from "../mappers/document.mapper";
-import { RequestUser } from "../types/request";
 import { UserRole } from "../enum/UserRoleEnum";
 import {
   generateDocumentToken,
   getDocumentFromStorage,
 } from "./storage.service";
 import { CustomError } from "../middlewares/error.middleware";
+import { Request } from "express";
 
 export async function createDocument(
   documentData: NewDocument
@@ -79,7 +79,7 @@ export async function getAllDocuments(
 
 export async function getDocumentToken(
   documentId: string,
-  user: RequestUser
+  user: Request["user"]
 ): Promise<string> {
   try {
     const results = await db

@@ -1,12 +1,19 @@
 import { eq } from "drizzle-orm";
 import db from "../db/schema";
 import { User } from "../db/schema/User";
-import { UserResponseDTO } from "../dto/users.dto";
+import { CreateUserDTO, UserResponseDTO } from "../dto/users.dto";
 import { userModelToDto } from "../mappers/user.mapper";
+import { hashPassword } from "./auth.service";
 
-export async function createUser(userData: any): Promise<UserResponseDTO> {
+export async function createUser(
+  data: CreateUserDTO
+): Promise<UserResponseDTO> {
   try {
-    const [newUser] = await db.insert(User).values(userData).returning();
+    const hashedPassword = await hashPassword(data.password);
+    const [newUser] = await db
+      .insert(User)
+      .values({ ...data, password: hashedPassword })
+      .returning();
     return userModelToDto(newUser);
   } catch (error) {
     console.error("Error creating user:", error);
