@@ -5,7 +5,7 @@ export default function JWTMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): any {
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {

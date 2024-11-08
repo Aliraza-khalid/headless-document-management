@@ -16,7 +16,7 @@ export default function errorMiddleware(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): any {
   if (error instanceof CustomError)
     return res.status(error.code).json({
       success: false,

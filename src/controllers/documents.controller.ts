@@ -1,13 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  createDocument,
-  deleteDocumentByAuthor,
-  downloadDocumentByLink,
-  getAllDocuments,
-  getDocumentToken,
-  updateDocumentByAuthor,
-  updateDocumentPermissionsByAuthor,
-} from "../servcies/documents.service";
+import DocumentService from "../servcies/documents.service";
 import {
   CreateDocumentDTO,
   DocumentsSearchParams,
@@ -15,6 +7,8 @@ import {
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
 import { CustomError } from "../middlewares/error.middleware";
+
+const documentService = new DocumentService();
 
 export async function CreateDocument(
   req: Request,
@@ -36,7 +30,7 @@ export async function CreateDocument(
         message: "File Not Uploaded",
       });
 
-    const data = await createDocument({
+    const data = await documentService.createDocument({
       ...validation.data,
       data: req.file.buffer,
       size: req.file.size,
@@ -67,7 +61,7 @@ export async function GetAllDocuments(
         validation.error.issues
       );
 
-    const data = await getAllDocuments(validation.data);
+    const data = await documentService.getAllDocuments(validation.data);
 
     return res.json({
       success: true,
@@ -86,7 +80,7 @@ export async function GetDocumentLink(
   try {
     const documentId = req.params.documentId;
 
-    const token = await getDocumentToken(documentId, req.user);
+    const token = await documentService.getDocumentToken(documentId, req.user);
 
     const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${token}`;
 
@@ -108,7 +102,7 @@ export async function DownloadDocument(
 ): Promise<any> {
   try {
     const linkId = req.params.linkId;
-    const document = await downloadDocumentByLink(linkId);
+    const document = await documentService.downloadDocumentByLink(linkId);
 
     res.setHeader("Content-Type", document.mimeType);
     res.setHeader(
@@ -138,7 +132,7 @@ export async function UpdateDocument(
     const userId = req.user.userId;
     const documentId = req.params.documentId;
 
-    await updateDocumentByAuthor(documentId, userId, validation.data);
+    await documentService.updateDocumentByAuthor(documentId, userId, validation.data);
 
     return res.json({
       success: true,
@@ -166,7 +160,7 @@ export async function UpdateDocumentPermissions(
     const userId = req.user.userId;
     const documentId = req.params.documentId;
 
-    await updateDocumentPermissionsByAuthor(
+    await documentService.updateDocumentPermissionsByAuthor(
       documentId,
       userId,
       validation.data
@@ -190,7 +184,7 @@ export async function DeleteDocument(
     const userId = req.user.userId;
     const documentId = req.params.documentId;
 
-    await deleteDocumentByAuthor(documentId, userId);
+    await documentService.deleteDocumentByAuthor(documentId, userId);
 
     return res.json({
       success: true,
