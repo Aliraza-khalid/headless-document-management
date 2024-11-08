@@ -16,20 +16,20 @@ import {
 } from "./storage.service";
 import { CustomError } from "../middlewares/error.middleware";
 import { Request } from "express";
+import DocumentRepository from "../repositories/document.repository";
+import { injectable } from "inversify";
 
+@injectable()
 export default class DocumentService {
+  constructor(private readonly documentRepository: DocumentRepository) {}
+
   async createDocument(
     documentData: NewDocument
   ): Promise<DocumentResponseDTO> {
     try {
-      const [newDocument] = await db
-        .insert(Document)
-        .values({
-          ...documentData,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
+      const newDocument = await this.documentRepository.insertDocument(
+        documentData
+      );
       return documentModelToDto(newDocument);
     } catch (error) {
       console.error("Error creating document:", error);

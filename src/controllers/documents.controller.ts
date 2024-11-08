@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import DocumentService from "../servcies/documents.service";
 import {
   CreateDocumentDTO,
   DocumentsSearchParams,
@@ -7,190 +6,206 @@ import {
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
 import { CustomError } from "../middlewares/error.middleware";
+import DocumentService from "../servcies/documents.service";
+import { injectable } from "inversify";
 
-const documentService = new DocumentService();
+@injectable()
+export default class DocumentController {
+  constructor(private readonly documentService: DocumentService) {}
 
-export async function CreateDocument(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const validation = CreateDocumentDTO.safeParse(req.body);
-    if (!validation.success)
-      throw new CustomError(
-        validation.error.issues[0].message,
-        400,
-        validation.error.issues
-      );
+  async createDocument(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const validation = CreateDocumentDTO.safeParse(req.body);
+      if (!validation.success)
+        throw new CustomError(
+          validation.error.issues[0].message,
+          400,
+          validation.error.issues
+        );
 
-    if (!req.file)
-      return res.status(400).json({
-        success: false,
-        message: "File Not Uploaded",
+      if (!req.file)
+        return res.status(400).json({
+          success: false,
+          message: "File Not Uploaded",
+        });
+
+      const data = await this.documentService.createDocument({
+        ...validation.data,
+        data: req.file.buffer,
+        size: req.file.size,
+        mimeType: req.file.mimetype,
+        authorId: req.user.userId,
       });
 
-    const data = await documentService.createDocument({
-      ...validation.data,
-      data: req.file.buffer,
-      size: req.file.size,
-      mimeType: req.file.mimetype,
-      authorId: req.user.userId,
-    });
-
-    return res.json({
-      success: true,
-      data,
-    });
-  } catch (error) {
-    next(error);
+      return res.json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-}
 
-export async function GetAllDocuments(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const validation = DocumentsSearchParams.safeParse(req.query);
-    if (!validation.success)
-      throw new CustomError(
-        validation.error.issues[0].message,
-        400,
-        validation.error.issues
+  async getAllDocuments(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const validation = DocumentsSearchParams.safeParse(req.query);
+      if (!validation.success)
+        throw new CustomError(
+          validation.error.issues[0].message,
+          400,
+          validation.error.issues
+        );
+
+      console.log("CONTROLLER", this)
+      const data = await this.documentService.getAllDocuments(validation.data);
+
+      return res.json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      console.log("HELLO", error);
+      next(error);
+    }
+  }
+
+  async getDocumentLink(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const documentId = req.params.documentId;
+
+      const token = await this.documentService.getDocumentToken(
+        documentId,
+        req.user
       );
 
-    const data = await documentService.getAllDocuments(validation.data);
+      const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${token}`;
 
-    return res.json({
-      success: true,
-      data,
-    });
-  } catch (error) {
-    next(error);
+      return res.json({
+        success: true,
+        data: {
+          downloadLink,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-}
 
-export async function GetDocumentLink(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const documentId = req.params.documentId;
-
-    const token = await documentService.getDocumentToken(documentId, req.user);
-
-    const downloadLink = `${req.protocol}://${req.hostname}/documents/download/${token}`;
-
-    return res.json({
-      success: true,
-      data: {
-        downloadLink,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function DownloadDocument(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const linkId = req.params.linkId;
-    const document = await documentService.downloadDocumentByLink(linkId);
-
-    res.setHeader("Content-Type", document.mimeType);
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${document.title}"`
-    );
-    res.send(document.data);
-  } catch (error) {
-    next(error);
-  }
-}
-
-export async function UpdateDocument(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const validation = UpdateDocumentDTO.safeParse(req.body);
-    if (!validation.success)
-      throw new CustomError(
-        validation.error.issues[0].message,
-        400,
-        validation.error.issues
+  async downloadDocument(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const linkId = req.params.linkId;
+      const document = await this.documentService.downloadDocumentByLink(
+        linkId
       );
 
-    const userId = req.user.userId;
-    const documentId = req.params.documentId;
-
-    await documentService.updateDocumentByAuthor(documentId, userId, validation.data);
-
-    return res.json({
-      success: true,
-      message: "Document Updated",
-    });
-  } catch (error) {
-    next(error);
+      res.setHeader("Content-Type", document.mimeType);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${document.title}"`
+      );
+      res.send(document.data);
+    } catch (error) {
+      next(error);
+    }
   }
-}
 
-export async function UpdateDocumentPermissions(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const validation = UpdateDocumentPermissionsDTO.safeParse(req.body);
-    if (!validation.success)
-      throw new CustomError(
-        validation.error.issues[0].message,
-        400,
-        validation.error.issues
+  async updateDocument(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const validation = UpdateDocumentDTO.safeParse(req.body);
+      if (!validation.success)
+        throw new CustomError(
+          validation.error.issues[0].message,
+          400,
+          validation.error.issues
+        );
+
+      const userId = req.user.userId;
+      const documentId = req.params.documentId;
+
+      await this.documentService.updateDocumentByAuthor(
+        documentId,
+        userId,
+        validation.data
       );
 
-    const userId = req.user.userId;
-    const documentId = req.params.documentId;
-
-    await documentService.updateDocumentPermissionsByAuthor(
-      documentId,
-      userId,
-      validation.data
-    );
-
-    return res.json({
-      success: true,
-      message: "Document Permissions Updated",
-    });
-  } catch (error) {
-    next(error);
+      return res.json({
+        success: true,
+        message: "Document Updated",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-}
 
-export async function DeleteDocument(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> {
-  try {
-    const userId = req.user.userId;
-    const documentId = req.params.documentId;
+  async updateDocumentPermissions(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const validation = UpdateDocumentPermissionsDTO.safeParse(req.body);
+      if (!validation.success)
+        throw new CustomError(
+          validation.error.issues[0].message,
+          400,
+          validation.error.issues
+        );
 
-    await documentService.deleteDocumentByAuthor(documentId, userId);
+      const userId = req.user.userId;
+      const documentId = req.params.documentId;
 
-    return res.json({
-      success: true,
-      message: "Document Deleted",
-    });
-  } catch (error) {
-    next(error);
+      await this.documentService.updateDocumentPermissionsByAuthor(
+        documentId,
+        userId,
+        validation.data
+      );
+
+      return res.json({
+        success: true,
+        message: "Document Permissions Updated",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteDocument(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<any> {
+    try {
+      const userId = req.user.userId;
+      const documentId = req.params.documentId;
+
+      await this.documentService.deleteDocumentByAuthor(documentId, userId);
+
+      return res.json({
+        success: true,
+        message: "Document Deleted",
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }
