@@ -5,14 +5,19 @@ import {
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
-import { CustomError } from "../middlewares/error.middleware";
+import { CustomError } from "../middlewares/Error.middleware";
 import DocumentService from "../servcies/documents.service";
-import { injectable } from "inversify";
+import { controller, httpGet, httpPost } from "inversify-express-utils";
+import { inject } from "inversify";
+import { ContainerTokens } from "../types/container";
+import Multer from "../servcies/multer.service";
+import JWTMiddleware from "../middlewares/JWT.middleware";
 
-@injectable()
+@controller('/document', JWTMiddleware)
 export default class DocumentController {
-  constructor(private readonly documentService: DocumentService) {}
+  constructor(@inject(ContainerTokens.DocumentService) private readonly documentService: DocumentService) { }
 
+  @httpPost('/', Multer.single("file"))
   async createDocument(
     req: Request,
     res: Response,
@@ -20,6 +25,7 @@ export default class DocumentController {
   ): Promise<any> {
     try {
       const validation = CreateDocumentDTO.safeParse(req.body);
+      console.log(validation.data, validation.data)
       if (!validation.success)
         throw new CustomError(
           validation.error.issues[0].message,
@@ -50,6 +56,7 @@ export default class DocumentController {
     }
   }
 
+  @httpGet('/')
   async getAllDocuments(
     req: Request,
     res: Response,

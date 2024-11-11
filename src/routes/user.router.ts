@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { GetUser, CreateUser, GetUserProfile } from "../controllers/users.controller";
-import adminMiddleware from "../middlewares/admin.middleware";
+import adminMiddleware from "../middlewares/Admin.middleware";
 
 const userRouter = Router();
 

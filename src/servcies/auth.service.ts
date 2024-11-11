@@ -4,7 +4,7 @@ import { UserResponseDTO } from "../dto/users.dto";
 import { LoginDTO } from "../dto/auth.dto";
 import { getUserByEmail } from "./users.service";
 import { userModelToDto } from "../mappers/user.mapper";
-import { CustomError } from "../middlewares/error.middleware";
+import { CustomError } from "../middlewares/Error.middleware";
 
 const SALT_ROUNDS = 10;
 
@@ -13,7 +13,7 @@ export async function login(
 ): Promise<{ token: string; user: UserResponseDTO }> {
   const user = await getUserByEmail(data.email);
 
-  if (!user) throw new CustomError("User Not Foung", 404);
+  if (!user) throw new CustomError("User Not Found", 404);
 
   const passwordMatch = await verifyPassword(data.password, user.password);
 

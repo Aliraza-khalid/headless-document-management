@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { createUser, getUserById } from "../servcies/users.service";
 import { CreateUserDTO } from "../dto/users.dto";
-import { CustomError } from "../middlewares/error.middleware";
+import { CustomError } from "../middlewares/Error.middleware";
 
 export async function CreateUser(
   req: Request,

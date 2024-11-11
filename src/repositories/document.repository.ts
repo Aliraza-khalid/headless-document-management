@@ -2,17 +2,18 @@ import { and, eq } from "drizzle-orm";
 import { DocumentDAO, NewDocument, Document } from "../db/schema/Document";
 import BaseRepository from "./base.repository";
 import { injectable } from "inversify";
+import db from "../db/schema";
 
 @injectable()
 export default class DocumentRepository extends BaseRepository<
   typeof Document
 > {
-  constructor(db: any, model: any) {
-    super(db, Document);
-  }
+  // constructor(db: any, model: any) {
+  //   super(db, Document);
+  // }
 
   async insertDocument(document: NewDocument): Promise<DocumentDAO> {
-    const [newDocument] = await this.db
+    const [newDocument] = await db
       .insert(Document)
       .values({
         ...document,
@@ -25,7 +26,7 @@ export default class DocumentRepository extends BaseRepository<
   }
 
   async deleteDocument(documentId: string, authorId: string): Promise<boolean> {
-    const result = await this.db
+    const result = await db
       .delete(Document)
       .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
 

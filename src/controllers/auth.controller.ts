@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { LoginDTO } from "../dto/auth.dto";
 import { login } from "../servcies/auth.service";
-import { CustomError } from "../middlewares/error.middleware";
+import { CustomError } from "../middlewares/Error.middleware";
 
 export async function Login(
   req: Request,

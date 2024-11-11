@@ -14,14 +14,15 @@ import {
   generateDocumentToken,
   getDocumentFromStorage,
 } from "./storage.service";
-import { CustomError } from "../middlewares/error.middleware";
+import { CustomError } from "../middlewares/Error.middleware";
 import { Request } from "express";
 import DocumentRepository from "../repositories/document.repository";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+import { ContainerTokens } from "../types/container";
 
 @injectable()
 export default class DocumentService {
-  constructor(private readonly documentRepository: DocumentRepository) {}
+  constructor(@inject(ContainerTokens.DocumentRepository) private readonly documentRepository: DocumentRepository) {}
 
   async createDocument(
     documentData: NewDocument
