@@ -11,12 +11,11 @@ import {
 import { SQL, and, count, desc, eq } from "drizzle-orm";
 
 export default class BaseRepository<Model extends PgTable<TableConfig>>
-  implements IBaseRepository<PgTableWithColumns<any>>
-{
+  implements IBaseRepository<PgTableWithColumns<any>> {
   constructor(
     protected readonly db: PgDatabase<any>,
     protected readonly model: any
-  ) {}
+  ) { }
 
   async findAll(options?: FindAllOptions): Promise<any> {
     let query = this.db.select().from(this.model);
@@ -49,13 +48,12 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
   }
 
   async findById(id: string): Promise<Record<string, any>> {
-    const result = await this.db
+    const results = await this.db
       .select()
       .from(this.model)
       .where(eq(this.model.id, id))
-      .limit(1);
 
-    return result;
+    return results;
   }
 
   async findOne(where: Partial<Model>): Promise<Record<string, any>> {
@@ -74,7 +72,11 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
   }
 
   async create(data: Partial<Model>): Promise<Model> {
-    const [result] = await this.db.insert(this.model).values(data).returning();
+    const [result] = await this.db.insert(this.model).values({
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
     return result;
   }
 

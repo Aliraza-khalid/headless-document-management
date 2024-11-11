@@ -1,9 +1,9 @@
 import "dotenv/config";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { drizzle, NodePgDatabase } from "drizzle-orm/node-postgres";
 
-const db = drizzle({
+export const db = drizzle({
   connection: process.env.DATABASE_URL!,
   // casing: "snake_case",
 });
 
-export default db;
+export type DB = NodePgDatabase;

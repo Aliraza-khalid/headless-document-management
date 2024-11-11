@@ -8,8 +8,11 @@ import DocumentRepository from "./repositories/document.repository";
 import DocumentService from "./servcies/documents.service";
 import DocumentController from "./controllers/documents.controller";
 import { ContainerTokens } from "./types/container";
+import { db } from "./db/schema";
 
 const container = new Container();
+
+container.bind(ContainerTokens.DB).toConstantValue(db);
 
 container.bind(ContainerTokens.DocumentRepository).to(DocumentRepository);
 container.bind(ContainerTokens.DocumentService).to(DocumentService);

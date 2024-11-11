@@ -18,7 +18,7 @@ export const DocumentUser = pgTable(
   })
 );
 
-export const DocumentsUsersRelations = relations(DocumentUser, ({ one }) => ({
+export const DocumentUserRelations = relations(DocumentUser, ({ one }) => ({
   user: one(User, {
     fields: [DocumentUser.userId],
     references: [User.id],
@@ -29,4 +29,5 @@ export const DocumentsUsersRelations = relations(DocumentUser, ({ one }) => ({
   }),
 }));
 
-export type DocumentsUsers = typeof DocumentUser.$inferSelect;
+export type DocumentUserDAO = typeof DocumentUser.$inferSelect;
+export type DocumentUser = typeof DocumentUser.$inferInsert;

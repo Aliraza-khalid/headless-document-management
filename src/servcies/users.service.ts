@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import db from "../db/schema";
+import { db } from "../db/schema";
 import { User } from "../db/schema/User";
 import { CreateUserDTO, UserResponseDTO } from "../dto/users.dto";
 import { userModelToDto } from "../mappers/user.mapper";

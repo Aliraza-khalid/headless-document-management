@@ -1,7 +1,4 @@
-import { SQL, and, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
-import db from "../db/schema";
-import { Document, DocumentDAO, NewDocument } from "../db/schema/Document";
-import { DocumentUser } from "../db/schema/DocumentUser";
+import { DocumentDAO, NewDocument } from "../db/schema/Document";
 import {
   DocumentResponseDTO,
   DocumentsSearchParams,
@@ -22,7 +19,10 @@ import { ContainerTokens } from "../types/container";
 
 @injectable()
 export default class DocumentService {
-  constructor(@inject(ContainerTokens.DocumentRepository) private readonly documentRepository: DocumentRepository) {}
+  constructor(
+    @inject(ContainerTokens.DocumentRepository)
+    private readonly documentRepository: DocumentRepository
+  ) {}
 
   async createDocument(
     documentData: NewDocument
@@ -42,36 +42,7 @@ export default class DocumentService {
     params: DocumentsSearchParams
   ): Promise<DocumentResponseDTO[]> {
     try {
-      const {
-        searchFilter,
-        isProtected,
-        mimeType,
-        sizeGreaterThan,
-        sizeLessThan,
-      } = params;
-      const filters: (SQL | undefined)[] = [];
-
-      if (searchFilter)
-        filters.push(
-          or(
-            ilike(Document.title, `%${searchFilter}%`),
-            sql`array_to_string(${
-              Document.tags
-            }, ' ') ILIKE ${`%${searchFilter}%`}`
-          )
-        );
-      if (isProtected)
-        filters.push(eq(Document.isProtected, isProtected === "true"));
-      if (mimeType) filters.push(eq(Document.mimeType, mimeType));
-      if (sizeGreaterThan)
-        filters.push(gte(Document.size, Number(sizeGreaterThan)));
-      if (sizeLessThan) filters.push(lte(Document.size, Number(sizeLessThan)));
-
-      const result = await db
-        .select()
-        .from(Document)
-        .where(and(...filters));
-
+      const result = await this.documentRepository.searchAllDocuments(params);
       return result.map((row) => documentModelToDto(row));
     } catch (error) {
       console.error("Error fetching Document:", error);
@@ -84,18 +55,14 @@ export default class DocumentService {
     user: Request["user"]
   ): Promise<string> {
     try {
-      const results = await db
-        .select()
-        .from(Document)
-        .leftJoin(DocumentUser, eq(Document.id, DocumentUser.documentId))
-        .where(eq(Document.id, documentId));
+      const results = await this.documentRepository.findById(documentId);
 
       if (!results?.length) throw new CustomError("Document Not Found", 404);
 
       const document = {
         ...results[0].documents!,
         usersAuthorized: results.reduce(
-          (acc, e) =>
+          (acc: string[], e: any) =>
             e.documents_users ? [...acc, e.documents_users.userId] : acc,
           [] as string[]
         ),
@@ -133,14 +100,13 @@ export default class DocumentService {
     documentData: UpdateDocumentDTO
   ): Promise<boolean> {
     try {
-      const result = await db
-        .update(Document)
-        .set({ ...documentData, updatedAt: new Date() })
-        .where(
-          and(eq(Document.id, documentId), eq(Document.authorId, authorId))
-        );
+      const result = await this.documentRepository.updateDocumentByAuthor(
+        documentId,
+        authorId,
+        documentData
+      );
 
-      if (!result.rowCount) throw new Error("Cannot update document");
+      if (!result) throw new Error("Cannot update document");
       return true;
     } catch (error) {
       console.error("Error updating document:", error);
@@ -154,22 +120,21 @@ export default class DocumentService {
     data: UpdateDocumentPermissionsDTO
   ): Promise<boolean> {
     try {
-      const result = await db
-        .update(Document)
-        .set({ ...data, updatedAt: new Date() })
-        .where(
-          and(eq(Document.id, documentId), eq(Document.authorId, authorId))
-        );
-      if (!result.rowCount) throw new Error("Cannot update document");
+      const result = await this.documentRepository.updateDocumentByAuthor(
+        documentId,
+        authorId,
+        data
+      );
+      if (!result) throw new Error("Cannot update document");
 
       if (data.usersAuthorized) {
-        await db
-          .delete(DocumentUser)
-          .where(eq(DocumentUser.documentId, documentId));
+        await this.documentRepository.deleteDocumentUserByDocumentId(
+          documentId
+        );
       }
 
       if (data.usersAuthorized?.length) {
-        await db.insert(DocumentUser).values(
+        await this.documentRepository.insertDocumentUsers(
           data.usersAuthorized.map((userId) => ({
             userId,
             documentId,
@@ -189,13 +154,12 @@ export default class DocumentService {
     authorId: string
   ): Promise<boolean> {
     try {
-      const result = await db
-        .delete(Document)
-        .where(
-          and(eq(Document.id, documentId), eq(Document.authorId, authorId))
-        );
+      const result = await this.documentRepository.deleteDocument(
+        documentId,
+        authorId
+      );
 
-      if (!result.rowCount) throw new Error("Cannot delete document");
+      if (!result) throw new Error("Cannot delete document");
       return true;
     } catch (error) {
       console.error("Error deleting document:", error);

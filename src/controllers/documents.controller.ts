@@ -71,7 +71,6 @@ export default class DocumentController {
           validation.error.issues
         );
 
-      console.log("CONTROLLER", this)
       const data = await this.documentService.getAllDocuments(validation.data);
 
       return res.json({
@@ -79,7 +78,6 @@ export default class DocumentController {
         data,
       });
     } catch (error) {
-      console.log("HELLO", error);
       next(error);
     }
   }
