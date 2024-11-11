@@ -7,7 +7,7 @@ import {
 } from "../dto/documents.dto";
 import { CustomError } from "../middlewares/Error.middleware";
 import DocumentService from "../servcies/documents.service";
-import { controller, httpGet, httpPost } from "inversify-express-utils";
+import { controller, httpDelete, httpGet, httpPatch, httpPost, httpPut } from "inversify-express-utils";
 import { inject } from "inversify";
 import { ContainerTokens } from "../types/container";
 import Multer from "../servcies/multer.service";
@@ -84,6 +84,7 @@ export default class DocumentController {
     }
   }
 
+  @httpGet('/:documentId')
   async getDocumentLink(
     req: Request,
     res: Response,
@@ -110,6 +111,7 @@ export default class DocumentController {
     }
   }
 
+  @httpGet('/download/:linkId')
   async downloadDocument(
     req: Request,
     res: Response,
@@ -132,6 +134,7 @@ export default class DocumentController {
     }
   }
 
+  @httpPatch('/:documentId')
   async updateDocument(
     req: Request,
     res: Response,
@@ -164,6 +167,7 @@ export default class DocumentController {
     }
   }
 
+  @httpPut('/permissions/:documentId')
   async updateDocumentPermissions(
     req: Request,
     res: Response,
@@ -196,6 +200,7 @@ export default class DocumentController {
     }
   }
 
+  @httpDelete('/:documentId')
   async deleteDocument(
     req: Request,
     res: Response,
