@@ -1,15 +1,16 @@
-import { PgDatabase, TableConfig, PgTable } from "drizzle-orm/pg-core";
+import { PgDatabase, PgTableWithColumns } from "drizzle-orm/pg-core";
 import {
   FindAllOptions,
   IBaseRepository,
 } from "../types/repositories/iBaseRepo";
 import { SQL, and, count, desc, eq } from "drizzle-orm";
 
-type ModelType = PgTable<TableConfig> & Record<string, any>;
-export default class BaseRepository<Model> implements IBaseRepository<Model> {
+export default class BaseRepository<Model extends PgTableWithColumns<any>>
+  implements IBaseRepository<Model>
+{
   constructor(
     protected readonly db: PgDatabase<any>,
-    protected readonly model: ModelType
+    protected readonly model: Model
   ) {}
 
   async findAll(options?: FindAllOptions) {
@@ -48,10 +49,10 @@ export default class BaseRepository<Model> implements IBaseRepository<Model> {
       .from(this.model)
       .where(eq(this.model.id, id));
 
-    return result;
+    return result as Model["$inferSelect"];
   }
 
-  async findOne(where: Partial<Model>) {
+  async findOne(where: Record<string, any>) {
     const whereConditions: SQL[] = [];
     Object.entries(where).forEach(([key, value]) => {
       whereConditions.push(eq(this.model[key], value));
@@ -63,10 +64,10 @@ export default class BaseRepository<Model> implements IBaseRepository<Model> {
       .where(and(...whereConditions))
       .limit(1);
 
-    return result;
+    return result as Model["$inferSelect"];
   }
 
-  async create(data: Partial<Model>) {
+  async create(data: Model["$inferInsert"]) {
     const [result] = await this.db
       .insert(this.model)
       .values({
@@ -75,21 +76,21 @@ export default class BaseRepository<Model> implements IBaseRepository<Model> {
         updatedAt: new Date(),
       })
       .returning();
-    return result;
+    return result as Model["$inferSelect"];
   }
 
-  async createMany(data: Partial<Model>[]) {
+  async createMany(data: Model["$inferInsert"][]) {
     return this.db.insert(this.model).values(data).returning();
   }
 
-  async update(id: string, data: Partial<Model>) {
+  async update(id: string, data: Model["$inferInsert"]) {
     const [result] = await this.db
       .update(this.model)
       .set(data)
       .where(eq(this.model.id, id))
       .returning();
 
-    return result;
+    return result as Model["$inferSelect"];
   }
 
   async delete(id: string) {
@@ -100,7 +101,7 @@ export default class BaseRepository<Model> implements IBaseRepository<Model> {
     return true;
   }
 
-  async count(where?: Partial<Model>) {
+  async count(where?: Record<string, any>) {
     let query = this.db.select({ count: count() }).from(this.model);
 
     if (where) {

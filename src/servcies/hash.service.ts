@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 
 @injectable()
 export default class HashService {
-  SALT_ROUNDS = 10;
+  private SALT_ROUNDS = 10;
 
   async hashPassword(password: string) {
     try {

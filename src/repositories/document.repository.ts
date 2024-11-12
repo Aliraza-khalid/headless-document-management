@@ -9,7 +9,7 @@ import { DocumentUser, DocumentUserDAO } from "../db/schema/DocumentUser";
 
 @injectable()
 export default class DocumentRepository extends BaseRepository<
-  typeof Document
+  typeof DocumentTable
 > {
   constructor(@inject(ContainerTokens.DB) db: DB) {
     super(db, DocumentTable);

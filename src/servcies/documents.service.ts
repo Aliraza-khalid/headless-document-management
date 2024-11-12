@@ -16,10 +16,13 @@ import { Request } from "express";
 import DocumentRepository from "../repositories/document.repository";
 import { inject, injectable } from "inversify";
 import { ContainerTokens } from "../types/container";
+import LoggerService from "./logger.service";
 
 @injectable()
 export default class DocumentService {
   constructor(
+    @inject(ContainerTokens.Logger)
+    private readonly loggerService: LoggerService,
     @inject(ContainerTokens.DocumentRepository)
     private readonly documentRepository: DocumentRepository
   ) {}

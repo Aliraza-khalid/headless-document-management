@@ -1,4 +1,7 @@
 import { NextFunction, Request, Response } from "express";
+import { container } from "../app";
+import LoggerService from "../servcies/logger.service";
+import { ContainerTokens } from "../types/container";
 
 export class CustomError extends Error {
   code: number;
@@ -17,6 +20,9 @@ export default function errorMiddleware(
   res: Response,
   next: NextFunction
 ): any {
+  const logger = container.get<LoggerService>(ContainerTokens.Logger);
+  logger.error(error.message);
+
   if (error instanceof CustomError)
     return res.status(error.code).json({
       success: false,

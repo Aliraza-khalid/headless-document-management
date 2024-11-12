@@ -1,12 +1,14 @@
-export interface IBaseRepository<T> {
-  findAll(options?: FindAllOptions): Promise<Record<string, any>[]>;
-  findById(id: string): Promise<Record<string, any>>;
-  findOne(where: Partial<T>): Promise<Record<string, any>>;
-  create(data: Partial<T>): Promise<Record<string, any>>;
-  createMany(data: Partial<T>[]): Promise<Record<string, any>[]>;
-  update(id: string, data: Partial<T>): Promise<Record<string, any> | null>;
+import { PgTableWithColumns } from "drizzle-orm/pg-core";
+
+export interface IBaseRepository<T extends PgTableWithColumns<any>> {
+  findAll(options?: FindAllOptions): Promise<T['$inferSelect'][]>;
+  findById(id: string): Promise<T['$inferSelect']>;
+  findOne(where: Record<string, any>): Promise<T['$inferSelect']>;
+  create(data: T["$inferInsert"]): Promise<T['$inferSelect']>;
+  createMany(data: T["$inferInsert"][]): Promise<T['$inferSelect'][]>;
+  update(id: string, data: T["$inferInsert"]): Promise<T['$inferSelect'] | null>;
   delete(id: string): Promise<boolean>;
-  count(where?: Partial<T>): Promise<number>;
+  count(where?: Record<string, any>): Promise<number>;
 }
 
 export interface FindAllOptions {

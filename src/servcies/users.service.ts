@@ -5,10 +5,13 @@ import { inject, injectable } from "inversify";
 import { ContainerTokens } from "../types/container";
 import UserRepository from "../repositories/user.repository";
 import HashService from "./hash.service";
+import LoggerService from "./logger.service";
 
 injectable();
 export default class UserService {
   constructor(
+    @inject(ContainerTokens.Logger)
+    private readonly loggerService: LoggerService,
     @inject(ContainerTokens.UserRepository)
     private readonly userRepository: UserRepository,
     @inject(ContainerTokens.HashService)
@@ -21,10 +24,10 @@ export default class UserService {
       const newUser = await this.userRepository.create({
         ...data,
         password: hashedPassword,
-      } as any);
-      return userModelToDto(newUser as any);
+      });
+      this.loggerService.info(`[User Created] ${newUser.email}`);
+      return userModelToDto(newUser);
     } catch (error) {
-      console.error("Error creating user:", error);
       throw error;
     }
   }
@@ -32,9 +35,9 @@ export default class UserService {
   async getAllUsers(): Promise<UserResponseDTO[]> {
     try {
       const users = await this.userRepository.findAll();
-      return users.map((user: any) => userModelToDto(user));
+      this.loggerService.info(`[Fetch All Users]`);
+      return users.map((user) => userModelToDto(user));
     } catch (error) {
-      console.error("Error fetching users:", error);
       throw error;
     }
   }
@@ -42,9 +45,9 @@ export default class UserService {
   async getUserById(id: string): Promise<UserResponseDTO> {
     try {
       const user = await this.userRepository.findById(id);
-      return userModelToDto(user as any);
+      this.loggerService.info(`[Fetch User By Id] ${user.email}`);
+      return userModelToDto(user);
     } catch (error) {
-      console.error("Error fetching user:", error);
       throw error;
     }
   }
@@ -52,9 +55,9 @@ export default class UserService {
   async getUserByEmail(email: string): Promise<UserDAO> {
     try {
       const user = await this.userRepository.findOne({ email });
-      return user as any;
+      this.loggerService.info(`[Fetch User By Email] ${user.email}`);
+      return user;
     } catch (error) {
-      console.error("Error fetching user:", error);
       throw error;
     }
   }
@@ -62,9 +65,9 @@ export default class UserService {
   async updateUser(id: string, userData: any): Promise<UserResponseDTO> {
     try {
       const updatedUser = await this.userRepository.update(id, userData);
-      return userModelToDto(updatedUser as any);
+      this.loggerService.info(`[Update User] ${updatedUser.email}`);
+      return userModelToDto(updatedUser);
     } catch (error) {
-      console.error("Error updating user:", error);
       throw error;
     }
   }

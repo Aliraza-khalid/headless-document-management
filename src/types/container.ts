@@ -1,5 +1,6 @@
 export const ContainerTokens = {
   DB: Symbol.for('DB'),
+  Logger: Symbol.for('Logger'),
 
   DocumentRepository: Symbol.for('DocumentRespository'),
   DocumentService: Symbol.for('DocumentService'),

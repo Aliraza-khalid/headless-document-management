@@ -7,11 +7,14 @@ import { inject, injectable } from "inversify";
 import { ContainerTokens } from "../types/container";
 import UserService from "./users.service";
 import HashService from "./hash.service";
+import LoggerService from "./logger.service";
 
 @injectable()
 export default class AuthService {
 
   constructor(
+    @inject(ContainerTokens.Logger)
+    private readonly loggerService: LoggerService,
     @inject(ContainerTokens.UserService)
     private readonly userService: UserService,
     @inject(ContainerTokens.HashService)
@@ -38,6 +41,7 @@ export default class AuthService {
       role: user.role,
     });
 
+    this.loggerService.info(`Login Success - ${user.email}`)
     return {
       token,
       user: userModelToDto(user),
