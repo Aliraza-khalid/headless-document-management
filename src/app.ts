@@ -36,7 +36,7 @@ server.setConfig((app) => {
   app.use(json());
   app.use((req, res, next) => {
     const logger = container.get<LoggerService>(ContainerTokens.Logger);
-    logger.info(`${req.method} ${req.path}`, {
+    logger.info(`[${req.method}] ${req.path}`, {
       headers: req.headers,
       query: req.query,
       body: req.body,

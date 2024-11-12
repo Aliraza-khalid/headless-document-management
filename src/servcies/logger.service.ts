@@ -36,24 +36,29 @@ export default class LoggerService implements ILogger {
     });
   }
 
-  private getCallerMethodName(): string {
+  private getCallerMethodName(): string | undefined {
     const error = new Error();
-    const stackLines = error.stack ? error.stack.split('\n') : [];
+    const stackLines = error.stack ? error.stack.split("\n") : [];
     const callerLine = stackLines[4];
-    const methodName = callerLine.match(/at (\w+)\.?/)?.[1] || 'Unknown';
+    const methodName = callerLine.match(/at (\w+)\.?/)?.[1];
 
     return methodName;
   }
 
+  private addSqaureBrackets(value?: string): string {
+    if (!value) return "";
+    return `[${value}]`;
+  }
+
   private getColorForLevel(level: string): string {
     switch (level) {
-      case 'info':
+      case "info":
         return this.colors.green;
-      case 'warn':
+      case "warn":
         return this.colors.yellow;
-      case 'error':
+      case "error":
         return this.colors.red;
-      case 'debug':
+      case "debug":
         return this.colors.cyan;
       default:
         return this.colors.white;
@@ -68,9 +73,9 @@ export default class LoggerService implements ILogger {
     const timestamp = new Date().toISOString();
     const color = this.getColorForLevel(level);
     const metaString = meta ? JSON.stringify(meta) : "";
-    const callerMethod = this.getCallerMethodName()
-    
-    const consoleMessage = `${timestamp} ${color} [${callerMethod}] ${message}${this.colors.reset} ${metaString ? metaString + '\n' : '\n'}`;
+    const callerMethod = this.addSqaureBrackets(this.getCallerMethodName());
+
+    const consoleMessage = `${timestamp} ${color}${(callerMethod)} ${message}${this.colors.reset} ${metaString ? metaString + "\n" : "\n"}`;
     const fileMessage = `${timestamp} [${level.toUpperCase()}] ${message} ${metaString}\n`;
 
     console.log(consoleMessage);

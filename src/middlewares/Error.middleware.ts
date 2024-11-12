@@ -21,7 +21,7 @@ export default function errorMiddleware(
   next: NextFunction
 ): any {
   const logger = container.get<LoggerService>(ContainerTokens.Logger);
-  logger.error(error.message);
+  logger.error(error.message, error.stack);
 
   if (error instanceof CustomError)
     return res.status(error.code).json({
