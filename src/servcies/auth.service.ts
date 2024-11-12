@@ -1,59 +1,52 @@
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserResponseDTO } from "../dto/users.dto";
 import { LoginDTO } from "../dto/auth.dto";
 import { userModelToDto } from "../mappers/user.mapper";
 import { CustomError } from "../middlewares/Error.middleware";
+import { inject, injectable } from "inversify";
+import { ContainerTokens } from "../types/container";
+import UserService from "./users.service";
+import HashService from "./hash.service";
 
-const SALT_ROUNDS = 10;
+@injectable()
+export default class AuthService {
 
-export async function login(
-  data: LoginDTO
-): Promise<{ token: string; user: UserResponseDTO }> {
-  const user: any = {};
-  // const user = await getUserByEmail(data.email);
+  constructor(
+    @inject(ContainerTokens.UserService)
+    private readonly userService: UserService,
+    @inject(ContainerTokens.HashService)
+    private readonly hashService: HashService
+  ) {}
 
-  if (!user) throw new CustomError("User Not Found", 404);
+  async login(
+    data: LoginDTO
+  ): Promise<{ token: string; user: UserResponseDTO }> {
+    const user = await this.userService.getUserByEmail(data.email);
 
-  const passwordMatch = await verifyPassword(data.password, user.password);
+    if (!user) throw new CustomError("User Not Found", 404);
 
-  if (!passwordMatch) throw new CustomError("Invalid Credentials", 401);
+    const passwordMatch = await this.hashService.verifyPassword(
+      data.password,
+      user.password
+    );
 
-  const token = generateToken({
-    userId: user.id,
-    email: user.email,
-    role: user.role,
-  });
+    if (!passwordMatch) throw new CustomError("Invalid Credentials", 401);
 
-  return {
-    token,
-    user: userModelToDto(user),
-  };
-}
+    const token = this.generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-export async function hashPassword(password: string) {
-  try {
-    const salt = await bcrypt.genSalt(SALT_ROUNDS);
-    const hash = await bcrypt.hash(password, salt);
-    return hash;
-  } catch (error) {
-    console.error("Error hashing password:", error);
-    throw error;
+    return {
+      token,
+      user: userModelToDto(user),
+    };
   }
-}
 
-export async function verifyPassword(password: string, hash: string) {
-  try {
-    const isMatch = await bcrypt.compare(password, hash);
-    return isMatch;
-  } catch (error) {
-    console.error("Error verifying password:", error);
-    throw error;
+  private generateToken(payload: any) {
+    return jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: "1d",
+    });
   }
-}
-
-export function generateToken(payload: any) {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: "1d",
-  });
 }

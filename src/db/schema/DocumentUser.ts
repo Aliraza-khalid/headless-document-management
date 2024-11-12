@@ -1,6 +1,6 @@
 import { pgTable, primaryKey, uuid } from "drizzle-orm/pg-core";
-import { User } from "./User";
-import { Document } from "./Document";
+import { UserTable } from "./User";
+import { DocumentTable } from "./Document";
 import { relations } from "drizzle-orm";
 
 export const DocumentUser = pgTable(
@@ -8,10 +8,10 @@ export const DocumentUser = pgTable(
   {
     userId: uuid()
       .notNull()
-      .references(() => User.id),
+      .references(() => UserTable.id),
     documentId: uuid()
       .notNull()
-      .references(() => Document.id),
+      .references(() => DocumentTable.id),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.userId, t.documentId] }),
@@ -19,13 +19,13 @@ export const DocumentUser = pgTable(
 );
 
 export const DocumentUserRelations = relations(DocumentUser, ({ one }) => ({
-  user: one(User, {
+  user: one(UserTable, {
     fields: [DocumentUser.userId],
-    references: [User.id],
+    references: [UserTable.id],
   }),
-  document: one(Document, {
+  document: one(DocumentTable, {
     fields: [DocumentUser.documentId],
-    references: [Document.id],
+    references: [DocumentTable.id],
   }),
 }));
 

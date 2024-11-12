@@ -1,5 +1,5 @@
 import { and, eq, gte, ilike, lte, or, sql, SQL } from "drizzle-orm";
-import { DocumentDAO, NewDocument, Document } from "../db/schema/Document";
+import { DocumentDAO, NewDocument, DocumentTable } from "../db/schema/Document";
 import BaseRepository from "./base.repository";
 import { inject, injectable } from "inversify";
 import { DB } from "../db/schema";
@@ -12,7 +12,7 @@ export default class DocumentRepository extends BaseRepository<
   typeof Document
 > {
   constructor(@inject(ContainerTokens.DB) db: DB) {
-    super(db, Document);
+    super(db, DocumentTable);
   }
 
   async searchAllDocuments(
@@ -30,22 +30,22 @@ export default class DocumentRepository extends BaseRepository<
     if (searchFilter)
       filters.push(
         or(
-          ilike(Document.title, `%${searchFilter}%`),
+          ilike(DocumentTable.title, `%${searchFilter}%`),
           sql`array_to_string(${
-            Document.tags
+            DocumentTable.tags
           }, ' ') ILIKE ${`%${searchFilter}%`}`
         )
       );
     if (isProtected)
-      filters.push(eq(Document.isProtected, isProtected === "true"));
-    if (mimeType) filters.push(eq(Document.mimeType, mimeType));
+      filters.push(eq(DocumentTable.isProtected, isProtected === "true"));
+    if (mimeType) filters.push(eq(DocumentTable.mimeType, mimeType));
     if (sizeGreaterThan)
-      filters.push(gte(Document.size, Number(sizeGreaterThan)));
-    if (sizeLessThan) filters.push(lte(Document.size, Number(sizeLessThan)));
+      filters.push(gte(DocumentTable.size, Number(sizeGreaterThan)));
+    if (sizeLessThan) filters.push(lte(DocumentTable.size, Number(sizeLessThan)));
 
     const result = await this.db
       .select()
-      .from(Document)
+      .from(DocumentTable)
       .where(and(...filters));
 
     return result;
@@ -57,7 +57,7 @@ export default class DocumentRepository extends BaseRepository<
     const results = await this.db
       .select()
       .from(this.model)
-      .leftJoin(DocumentUser, eq(Document.id, DocumentUser.documentId))
+      .leftJoin(DocumentUser, eq(DocumentTable.id, DocumentUser.documentId))
       .where(eq(this.model.id, documentId));
 
     return results;
@@ -65,7 +65,7 @@ export default class DocumentRepository extends BaseRepository<
 
   async insertDocument(document: NewDocument): Promise<DocumentDAO> {
     const [newDocument] = await this.db
-      .insert(Document)
+      .insert(DocumentTable)
       .values({
         ...document,
         createdAt: new Date(),
@@ -82,9 +82,9 @@ export default class DocumentRepository extends BaseRepository<
     documentData: any
   ): Promise<boolean> {
     const result = await this.db
-      .update(Document)
+      .update(DocumentTable)
       .set({ ...documentData, updatedAt: new Date() })
-      .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
+      .where(and(eq(DocumentTable.id, documentId), eq(DocumentTable.authorId, authorId)));
 
     if (!result.rowCount) return false;
     return true;
@@ -92,8 +92,8 @@ export default class DocumentRepository extends BaseRepository<
 
   async deleteDocument(documentId: string, authorId: string): Promise<boolean> {
     const result = await this.db
-      .delete(Document)
-      .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
+      .delete(DocumentTable)
+      .where(and(eq(DocumentTable.id, documentId), eq(DocumentTable.authorId, authorId)));
 
     if (!result.rowCount) return false;
     return true;

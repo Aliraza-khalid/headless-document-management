@@ -9,6 +9,7 @@ export const ContainerTokens = {
   UserService: Symbol.for('UserService'),
   UserController: Symbol.for('UserController'),
 
+  HashService: Symbol.for('HashService'),
   AuthService: Symbol.for('AuthService'),
   AuthController: Symbol.for('AuthController'),
 }

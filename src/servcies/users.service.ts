@@ -1,21 +1,23 @@
-import { UserTable, UserDAO } from "../db/schema/User";
+import { UserDAO } from "../db/schema/User";
 import { CreateUserDTO, UserResponseDTO } from "../dto/users.dto";
 import { userModelToDto } from "../mappers/user.mapper";
-import { hashPassword } from "./auth.service";
 import { inject, injectable } from "inversify";
 import { ContainerTokens } from "../types/container";
 import UserRepository from "../repositories/user.repository";
+import HashService from "./hash.service";
 
 injectable();
 export default class UserService {
   constructor(
     @inject(ContainerTokens.UserRepository)
-    private readonly userRepository: UserRepository
+    private readonly userRepository: UserRepository,
+    @inject(ContainerTokens.HashService)
+    private readonly hashService: HashService
   ) {}
 
   async createUser(data: CreateUserDTO): Promise<UserResponseDTO> {
     try {
-      const hashedPassword = await hashPassword(data.password);
+      const hashedPassword = await this.hashService.hashPassword(data.password);
       const newUser = await this.userRepository.create({
         ...data,
         password: hashedPassword,

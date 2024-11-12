@@ -1,6 +1,6 @@
 import { relations, getTableColumns } from "drizzle-orm";
 import { pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core";
-import { Document } from "./Document";
+import { DocumentTable } from "./Document";
 
 export const UserRoleEnum = pgEnum("user_role", ["ADMIN", "USER"]);
 
@@ -12,8 +12,8 @@ export const UserTable = pgTable("users", {
 });
 
 export const UserRelations = relations(UserTable, ({ many }) => ({
-  documentsAuthored: many(Document),
-  documentsAuthorized: many(Document),
+  documentsAuthored: many(DocumentTable),
+  documentsAuthorized: many(DocumentTable),
 }));
 
 export type UserDAO = typeof UserTable.$inferSelect;
