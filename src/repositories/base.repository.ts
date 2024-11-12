@@ -1,23 +1,18 @@
-import {
-  PgDatabase,
-  PgTableWithColumns,
-  TableConfig,
-  PgTable,
-} from "drizzle-orm/pg-core";
+import { PgDatabase, TableConfig, PgTable } from "drizzle-orm/pg-core";
 import {
   FindAllOptions,
   IBaseRepository,
 } from "../types/repositories/iBaseRepo";
 import { SQL, and, count, desc, eq } from "drizzle-orm";
 
-export default class BaseRepository<Model extends PgTable<TableConfig>>
-  implements IBaseRepository<PgTableWithColumns<any>> {
+type ModelType = PgTable<TableConfig> & Record<string, any>;
+export default class BaseRepository<Model> implements IBaseRepository<Model> {
   constructor(
     protected readonly db: PgDatabase<any>,
-    protected readonly model: any
-  ) { }
+    protected readonly model: ModelType
+  ) {}
 
-  async findAll(options?: FindAllOptions): Promise<any> {
+  async findAll(options?: FindAllOptions) {
     let query = this.db.select().from(this.model);
 
     if (options?.where) {
@@ -47,16 +42,16 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
     return query;
   }
 
-  async findById(id: string): Promise<Record<string, any>> {
-    const results = await this.db
+  async findById(id: string) {
+    const [result] = await this.db
       .select()
       .from(this.model)
-      .where(eq(this.model.id, id))
+      .where(eq(this.model.id, id));
 
-    return results;
+    return result;
   }
 
-  async findOne(where: Partial<Model>): Promise<Record<string, any>> {
+  async findOne(where: Partial<Model>) {
     const whereConditions: SQL[] = [];
     Object.entries(where).forEach(([key, value]) => {
       whereConditions.push(eq(this.model[key], value));
@@ -71,30 +66,33 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
     return result;
   }
 
-  async create(data: Partial<Model>): Promise<Model> {
-    const [result] = await this.db.insert(this.model).values({
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
+  async create(data: Partial<Model>) {
+    const [result] = await this.db
+      .insert(this.model)
+      .values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
     return result;
   }
 
-  async createMany(data: Partial<Model>[]): Promise<Model[]> {
+  async createMany(data: Partial<Model>[]) {
     return this.db.insert(this.model).values(data).returning();
   }
 
-  async update(id: string, data: Partial<Model>): Promise<Model | null> {
+  async update(id: string, data: Partial<Model>) {
     const [result] = await this.db
       .update(this.model)
       .set(data)
       .where(eq(this.model.id, id))
       .returning();
 
-    return result || null;
+    return result;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string) {
     const result = await this.db
       .delete(this.model)
       .where(eq(this.model.id, id));
@@ -102,7 +100,7 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
     return true;
   }
 
-  async count(where?: Partial<Model>): Promise<number> {
+  async count(where?: Partial<Model>) {
     let query = this.db.select({ count: count() }).from(this.model);
 
     if (where) {
@@ -114,6 +112,6 @@ export default class BaseRepository<Model extends PgTable<TableConfig>>
     }
 
     const [result] = await query;
-    return Number(result.count) || 0;
+    return result.count;
   }
 }

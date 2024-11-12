@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { UserResponseDTO } from "../dto/users.dto";
 import { LoginDTO } from "../dto/auth.dto";
-import { getUserByEmail } from "./users.service";
 import { userModelToDto } from "../mappers/user.mapper";
 import { CustomError } from "../middlewares/Error.middleware";
 
@@ -11,7 +10,8 @@ const SALT_ROUNDS = 10;
 export async function login(
   data: LoginDTO
 ): Promise<{ token: string; user: UserResponseDTO }> {
-  const user = await getUserByEmail(data.email);
+  const user: any = {};
+  // const user = await getUserByEmail(data.email);
 
   if (!user) throw new CustomError("User Not Found", 404);
 

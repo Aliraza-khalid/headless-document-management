@@ -55,7 +55,7 @@ export default class DocumentService {
     user: Request["user"]
   ): Promise<string> {
     try {
-      const results = await this.documentRepository.findById(documentId);
+      const results = await this.documentRepository.findDocumentWithUsers(documentId);
 
       if (!results?.length) throw new CustomError("Document Not Found", 404);
 

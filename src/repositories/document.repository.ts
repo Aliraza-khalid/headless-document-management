@@ -51,6 +51,18 @@ export default class DocumentRepository extends BaseRepository<
     return result;
   }
 
+  async findDocumentWithUsers(
+    documentId: string
+  ): Promise<Record<string, any>> {
+    const results = await this.db
+      .select()
+      .from(this.model)
+      .leftJoin(DocumentUser, eq(Document.id, DocumentUser.documentId))
+      .where(eq(this.model.id, documentId));
+
+    return results;
+  }
+
   async insertDocument(document: NewDocument): Promise<DocumentDAO> {
     const [newDocument] = await this.db
       .insert(Document)
@@ -74,7 +86,7 @@ export default class DocumentRepository extends BaseRepository<
       .set({ ...documentData, updatedAt: new Date() })
       .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
 
-    if (!result.rowCount) throw new Error("Cannot update document");
+    if (!result.rowCount) return false;
     return true;
   }
 
@@ -83,7 +95,7 @@ export default class DocumentRepository extends BaseRepository<
       .delete(Document)
       .where(and(eq(Document.id, documentId), eq(Document.authorId, authorId)));
 
-    if (!result.rowCount) throw new Error("Cannot delete document");
+    if (!result.rowCount) return false;
     return true;
   }
 
@@ -96,7 +108,7 @@ export default class DocumentRepository extends BaseRepository<
       .delete(DocumentUser)
       .where(eq(DocumentUser.documentId, documentId));
 
-    if (!result.rowCount) throw new Error("Cannot delete document user");
+    if (!result.rowCount) return false;
     return true;
   }
 }
