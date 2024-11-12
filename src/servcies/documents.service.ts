@@ -34,9 +34,9 @@ export default class DocumentService {
       const newDocument = await this.documentRepository.insertDocument(
         documentData
       );
+      this.loggerService.info(`Create Document - ${newDocument.id}`);
       return documentModelToDto(newDocument);
     } catch (error) {
-      console.error("Error creating document:", error);
       throw error;
     }
   }
@@ -46,9 +46,9 @@ export default class DocumentService {
   ): Promise<DocumentResponseDTO[]> {
     try {
       const result = await this.documentRepository.searchAllDocuments(params);
+      this.loggerService.info(`Fetch All Documents`);
       return result.map((row) => documentModelToDto(row));
     } catch (error) {
-      console.error("Error fetching Document:", error);
       throw error;
     }
   }
@@ -58,7 +58,9 @@ export default class DocumentService {
     user: Request["user"]
   ): Promise<string> {
     try {
-      const results = await this.documentRepository.findDocumentWithUsers(documentId);
+      const results = await this.documentRepository.findDocumentWithUsers(
+        documentId
+      );
 
       if (!results?.length) throw new CustomError("Document Not Found", 404);
 
@@ -79,9 +81,9 @@ export default class DocumentService {
       )
         throw new CustomError("User Not Authorized", 403);
 
+      this.loggerService.info(`Generate Document Token - ${document.id}`);
       return generateDocumentToken(document);
     } catch (error) {
-      console.error("Error fetching document:", error);
       throw error;
     }
   }
@@ -90,9 +92,9 @@ export default class DocumentService {
     try {
       const document = getDocumentFromStorage(token);
       if (!document) throw new CustomError("Invalid Document Link", 404);
+      this.loggerService.info(`Download Document - ${document.id}`);
       return document;
     } catch (error) {
-      console.error("Error downloading document:", error);
       throw error;
     }
   }
@@ -110,9 +112,9 @@ export default class DocumentService {
       );
 
       if (!result) throw new Error("Cannot update document");
+      this.loggerService.info(`Update Document - ${documentId}`);
       return true;
     } catch (error) {
-      console.error("Error updating document:", error);
       throw error;
     }
   }
@@ -145,9 +147,9 @@ export default class DocumentService {
         );
       }
 
+      this.loggerService.info(`Update Document Permissions - ${documentId}`);
       return true;
     } catch (error) {
-      console.error("Error updating document:", error);
       throw error;
     }
   }
@@ -162,10 +164,10 @@ export default class DocumentService {
         authorId
       );
 
+      this.loggerService.info(`Delete Document - ${documentId}`);
       if (!result) throw new Error("Cannot delete document");
       return true;
     } catch (error) {
-      console.error("Error deleting document:", error);
       throw error;
     }
   }

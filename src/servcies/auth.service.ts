@@ -41,7 +41,7 @@ export default class AuthService {
       role: user.role,
     });
 
-    this.loggerService.info(`Login Success - ${user.email}`)
+    this.loggerService.info(`Login - ${user.email}`)
     return {
       token,
       user: userModelToDto(user),

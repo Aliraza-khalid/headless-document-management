@@ -36,8 +36,19 @@ export default class LoggerService implements ILogger {
     });
   }
 
+  private getCallerMethodName(): string {
+    const error = new Error();
+    const stackLines = error.stack ? error.stack.split('\n') : [];
+    const callerLine = stackLines[4];
+    const methodName = callerLine.match(/at (\w+)\.?/)?.[1] || 'Unknown';
+
+    return methodName;
+  }
+
   private getColorForLevel(level: string): string {
     switch (level) {
+      case 'info':
+        return this.colors.green;
       case 'warn':
         return this.colors.yellow;
       case 'error':
@@ -57,8 +68,9 @@ export default class LoggerService implements ILogger {
     const timestamp = new Date().toISOString();
     const color = this.getColorForLevel(level);
     const metaString = meta ? JSON.stringify(meta) : "";
+    const callerMethod = this.getCallerMethodName()
     
-    const consoleMessage = `${color}${timestamp} [${level.toUpperCase()}] ${message}${metaString ? metaString + '\n' : '\n'}${this.colors.reset}`;
+    const consoleMessage = `${timestamp} ${color} [${callerMethod}] ${message}${this.colors.reset} ${metaString ? metaString + '\n' : '\n'}`;
     const fileMessage = `${timestamp} [${level.toUpperCase()}] ${message} ${metaString}\n`;
 
     console.log(consoleMessage);

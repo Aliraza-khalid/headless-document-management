@@ -25,7 +25,7 @@ export default class UserService {
         ...data,
         password: hashedPassword,
       });
-      this.loggerService.info(`[User Created] ${newUser.email}`);
+      this.loggerService.info(`Create User - ${newUser.email}`);
       return userModelToDto(newUser);
     } catch (error) {
       throw error;
@@ -35,7 +35,7 @@ export default class UserService {
   async getAllUsers(): Promise<UserResponseDTO[]> {
     try {
       const users = await this.userRepository.findAll();
-      this.loggerService.info(`[Fetch All Users]`);
+      this.loggerService.info(`Fetch All Users`);
       return users.map((user) => userModelToDto(user));
     } catch (error) {
       throw error;
@@ -45,7 +45,7 @@ export default class UserService {
   async getUserById(id: string): Promise<UserResponseDTO> {
     try {
       const user = await this.userRepository.findById(id);
-      this.loggerService.info(`[Fetch User By Id] ${user.email}`);
+      this.loggerService.info(`Fetch User By Id - ${user.email}`);
       return userModelToDto(user);
     } catch (error) {
       throw error;
@@ -55,7 +55,7 @@ export default class UserService {
   async getUserByEmail(email: string): Promise<UserDAO> {
     try {
       const user = await this.userRepository.findOne({ email });
-      this.loggerService.info(`[Fetch User By Email] ${user.email}`);
+      this.loggerService.info(`Fetch User By Email - ${user.email}`);
       return user;
     } catch (error) {
       throw error;
@@ -65,7 +65,7 @@ export default class UserService {
   async updateUser(id: string, userData: any): Promise<UserResponseDTO> {
     try {
       const updatedUser = await this.userRepository.update(id, userData);
-      this.loggerService.info(`[Update User] ${updatedUser.email}`);
+      this.loggerService.info(`Update User - ${updatedUser.email}`);
       return userModelToDto(updatedUser);
     } catch (error) {
       throw error;
