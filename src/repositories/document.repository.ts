@@ -41,7 +41,8 @@ export default class DocumentRepository extends BaseRepository<
     if (mimeType) filters.push(eq(DocumentTable.mimeType, mimeType));
     if (sizeGreaterThan)
       filters.push(gte(DocumentTable.size, Number(sizeGreaterThan)));
-    if (sizeLessThan) filters.push(lte(DocumentTable.size, Number(sizeLessThan)));
+    if (sizeLessThan)
+      filters.push(lte(DocumentTable.size, Number(sizeLessThan)));
 
     const result = await this.db
       .select()
@@ -84,7 +85,12 @@ export default class DocumentRepository extends BaseRepository<
     const result = await this.db
       .update(DocumentTable)
       .set({ ...documentData, updatedAt: new Date() })
-      .where(and(eq(DocumentTable.id, documentId), eq(DocumentTable.authorId, authorId)));
+      .where(
+        and(
+          eq(DocumentTable.id, documentId),
+          eq(DocumentTable.authorId, authorId)
+        )
+      );
 
     if (!result.rowCount) return false;
     return true;
@@ -93,7 +99,12 @@ export default class DocumentRepository extends BaseRepository<
   async deleteDocument(documentId: string, authorId: string): Promise<boolean> {
     const result = await this.db
       .delete(DocumentTable)
-      .where(and(eq(DocumentTable.id, documentId), eq(DocumentTable.authorId, authorId)));
+      .where(
+        and(
+          eq(DocumentTable.id, documentId),
+          eq(DocumentTable.authorId, authorId)
+        )
+      );
 
     if (!result.rowCount) return false;
     return true;

@@ -30,73 +30,57 @@ export default class DocumentService {
   async createDocument(
     documentData: NewDocument
   ): Promise<DocumentResponseDTO> {
-    try {
-      const newDocument = await this.documentRepository.insertDocument(
-        documentData
-      );
-      this.loggerService.info(`Create Document - ${newDocument.id}`);
-      return documentModelToDto(newDocument);
-    } catch (error) {
-      throw error;
-    }
+    const newDocument = await this.documentRepository.insertDocument(
+      documentData
+    );
+    this.loggerService.info(`Create Document - ${newDocument.id}`);
+    return documentModelToDto(newDocument);
   }
 
   async getAllDocuments(
     params: DocumentsSearchParams
   ): Promise<DocumentResponseDTO[]> {
-    try {
-      const result = await this.documentRepository.searchAllDocuments(params);
-      this.loggerService.info(`Fetch All Documents`);
-      return result.map((row) => documentModelToDto(row));
-    } catch (error) {
-      throw error;
-    }
+    const result = await this.documentRepository.searchAllDocuments(params);
+    this.loggerService.info(`Fetch All Documents`);
+    return result.map((row) => documentModelToDto(row));
   }
 
   async getDocumentToken(
     documentId: string,
     user: Request["user"]
   ): Promise<string> {
-    try {
-      const results = await this.documentRepository.findDocumentWithUsers(
-        documentId
-      );
+    const results = await this.documentRepository.findDocumentWithUsers(
+      documentId
+    );
 
-      if (!results?.length) throw new CustomError("Document Not Found", 404);
+    if (!results?.length) throw new CustomError("Document Not Found", 404);
 
-      const document = {
-        ...results[0].documents!,
-        usersAuthorized: results.reduce(
-          (acc: string[], e: any) =>
-            e.documents_users ? [...acc, e.documents_users.userId] : acc,
-          [] as string[]
-        ),
-      };
+    const document = {
+      ...results[0].documents!,
+      usersAuthorized: results.reduce(
+        (acc: string[], e: any) =>
+          e.documents_users ? [...acc, e.documents_users.userId] : acc,
+        [] as string[]
+      ),
+    };
 
-      if (
-        user.role !== UserRole.Enum.ADMIN &&
-        document.isProtected &&
-        document.authorId !== user.userId &&
-        !document.usersAuthorized?.includes(user.userId)
-      )
-        throw new CustomError("User Not Authorized", 403);
+    if (
+      user.role !== UserRole.Enum.ADMIN &&
+      document.isProtected &&
+      document.authorId !== user.userId &&
+      !document.usersAuthorized?.includes(user.userId)
+    )
+      throw new CustomError("User Not Authorized", 403);
 
-      this.loggerService.info(`Generate Document Token - ${document.id}`);
-      return generateDocumentToken(document);
-    } catch (error) {
-      throw error;
-    }
+    this.loggerService.info(`Generate Document Token - ${document.id}`);
+    return generateDocumentToken(document);
   }
 
   async downloadDocumentByLink(token: string): Promise<DocumentDAO> {
-    try {
-      const document = getDocumentFromStorage(token);
-      if (!document) throw new CustomError("Invalid Document Link", 404);
-      this.loggerService.info(`Download Document - ${document.id}`);
-      return document;
-    } catch (error) {
-      throw error;
-    }
+    const document = getDocumentFromStorage(token);
+    if (!document) throw new CustomError("Invalid Document Link", 404);
+    this.loggerService.info(`Download Document - ${document.id}`);
+    return document;
   }
 
   async updateDocumentByAuthor(
@@ -104,19 +88,15 @@ export default class DocumentService {
     authorId: string,
     documentData: UpdateDocumentDTO
   ): Promise<boolean> {
-    try {
-      const result = await this.documentRepository.updateDocumentByAuthor(
-        documentId,
-        authorId,
-        documentData
-      );
+    const result = await this.documentRepository.updateDocumentByAuthor(
+      documentId,
+      authorId,
+      documentData
+    );
 
-      if (!result) throw new Error("Cannot update document");
-      this.loggerService.info(`Update Document - ${documentId}`);
-      return true;
-    } catch (error) {
-      throw error;
-    }
+    if (!result) throw new Error("Cannot update document");
+    this.loggerService.info(`Update Document - ${documentId}`);
+    return true;
   }
 
   async updateDocumentPermissionsByAuthor(
@@ -124,51 +104,41 @@ export default class DocumentService {
     authorId: string,
     data: UpdateDocumentPermissionsDTO
   ): Promise<boolean> {
-    try {
-      const result = await this.documentRepository.updateDocumentByAuthor(
-        documentId,
-        authorId,
-        data
-      );
-      if (!result) throw new Error("Cannot update document");
+    const result = await this.documentRepository.updateDocumentByAuthor(
+      documentId,
+      authorId,
+      data
+    );
+    if (!result) throw new Error("Cannot update document");
 
-      if (data.usersAuthorized) {
-        await this.documentRepository.deleteDocumentUserByDocumentId(
-          documentId
-        );
-      }
-
-      if (data.usersAuthorized?.length) {
-        await this.documentRepository.insertDocumentUsers(
-          data.usersAuthorized.map((userId) => ({
-            userId,
-            documentId,
-          }))
-        );
-      }
-
-      this.loggerService.info(`Update Document Permissions - ${documentId}`);
-      return true;
-    } catch (error) {
-      throw error;
+    if (data.usersAuthorized) {
+      await this.documentRepository.deleteDocumentUserByDocumentId(documentId);
     }
+
+    if (data.usersAuthorized?.length) {
+      await this.documentRepository.insertDocumentUsers(
+        data.usersAuthorized.map((userId) => ({
+          userId,
+          documentId,
+        }))
+      );
+    }
+
+    this.loggerService.info(`Update Document Permissions - ${documentId}`);
+    return true;
   }
 
   async deleteDocumentByAuthor(
     documentId: string,
     authorId: string
   ): Promise<boolean> {
-    try {
-      const result = await this.documentRepository.deleteDocument(
-        documentId,
-        authorId
-      );
+    const result = await this.documentRepository.deleteDocument(
+      documentId,
+      authorId
+    );
 
-      this.loggerService.info(`Delete Document - ${documentId}`);
-      if (!result) throw new Error("Cannot delete document");
-      return true;
-    } catch (error) {
-      throw error;
-    }
+    this.loggerService.info(`Delete Document - ${documentId}`);
+    if (!result) throw new Error("Cannot delete document");
+    return true;
   }
 }
