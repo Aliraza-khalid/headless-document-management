@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   CreateDocumentDTO,
   DocumentsSearchParams,
+  GetAllDocumentsDTO,
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
@@ -63,7 +64,7 @@ export default class DocumentController {
     next: NextFunction
   ): Promise<any> {
     try {
-      const validation = DocumentsSearchParams.safeParse(req.query);
+      const validation = GetAllDocumentsDTO.safeParse(req.query);
       if (!validation.success)
         throw new CustomError(
           validation.error.issues[0].message,

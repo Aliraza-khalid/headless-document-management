@@ -1,10 +1,13 @@
-import { and, eq, gte, ilike, lte, or, sql, SQL } from "drizzle-orm";
+import { and, desc, asc, eq, gte, ilike, lte, or, sql, SQL } from "drizzle-orm";
 import { DocumentDAO, NewDocument, DocumentTable } from "../db/schema/Document";
 import BaseRepository from "./base.repository";
 import { inject, injectable } from "inversify";
 import { DB } from "../db/schema";
 import { ContainerTokens } from "../types/container";
-import { DocumentsSearchParams } from "../dto/documents.dto";
+import {
+  DocumentsPaginationOptions,
+  DocumentsSearchParams,
+} from "../dto/documents.dto";
 import { DocumentUser, DocumentUserDAO } from "../db/schema/DocumentUser";
 
 @injectable()
@@ -16,8 +19,10 @@ export default class DocumentRepository extends BaseRepository<
   }
 
   async searchAllDocuments(
+    paginationOptions: DocumentsPaginationOptions,
     filterOptions: DocumentsSearchParams
-  ): Promise<DocumentDAO[]> {
+  ): Promise<{ result: DocumentDAO[]; total: number }> {
+    const { pageNumber, pageSize, sortBy, sortDirection } = paginationOptions;
     const {
       searchFilter,
       isProtected,
@@ -44,12 +49,22 @@ export default class DocumentRepository extends BaseRepository<
     if (sizeLessThan)
       filters.push(lte(DocumentTable.size, Number(sizeLessThan)));
 
-    const result = await this.db
-      .select()
-      .from(DocumentTable)
-      .where(and(...filters));
+    const [result, total] = await Promise.all([
+      this.db
+        .select()
+        .from(DocumentTable)
+        .where(and(...filters))
+        .orderBy(
+          sortDirection === "DESC"
+            ? desc(DocumentTable[sortBy])
+            : asc(DocumentTable[sortBy])
+        )
+        .limit(pageSize)
+        .offset(pageSize * (pageNumber - 1)),
+      this.db.$count(DocumentTable),
+    ]);
 
-    return result;
+    return { result, total };
   }
 
   async findDocumentWithUsers(

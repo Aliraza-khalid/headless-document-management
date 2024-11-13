@@ -1,7 +1,7 @@
 import { DocumentDAO, NewDocument } from "../db/schema/Document";
 import {
   DocumentResponseDTO,
-  DocumentsSearchParams,
+  GetAllDocumentsDTO,
   UpdateDocumentDTO,
   UpdateDocumentPermissionsDTO,
 } from "../dto/documents.dto";
@@ -17,6 +17,7 @@ import DocumentRepository from "../repositories/document.repository";
 import { inject, injectable } from "inversify";
 import { ContainerTokens } from "../types/container";
 import LoggerService from "./logger.service";
+import { PaginationResponse } from "../types/pagination";
 
 @injectable()
 export default class DocumentService {
@@ -38,11 +39,27 @@ export default class DocumentService {
   }
 
   async getAllDocuments(
-    params: DocumentsSearchParams
-  ): Promise<DocumentResponseDTO[]> {
-    const result = await this.documentRepository.searchAllDocuments(params);
+    params: GetAllDocumentsDTO
+  ): Promise<PaginationResponse<DocumentResponseDTO>> {
+    const { pageNumber, pageSize, sortBy, sortDirection, ...filterParams } =
+      params;
+    const { result, total } = await this.documentRepository.searchAllDocuments(
+      {
+        pageNumber,
+        pageSize,
+        sortBy,
+        sortDirection,
+      },
+      filterParams
+    );
+
     this.loggerService.info(`Fetch All Documents`);
-    return result.map((row) => documentModelToDto(row));
+    return {
+      rows: result.map((row) => documentModelToDto(row)),
+      totalRows: total,
+      pageNumber,
+      pageSize,
+    };
   }
 
   async getDocumentToken(

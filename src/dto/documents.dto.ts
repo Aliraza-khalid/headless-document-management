@@ -1,5 +1,6 @@
 import z, { array, boolean, string } from "zod";
 import { DocumentDAO } from "../db/schema/Document";
+import { PaginationOptions } from "../types/pagination";
 
 export const CreateDocumentDTO = z
   .object({
@@ -37,6 +38,20 @@ export const DocumentsSearchParams = z
   .partial();
 
 export type DocumentsSearchParams = z.infer<typeof DocumentsSearchParams>;
+
+const DocumentsPaginationOptions = PaginationOptions.extend({
+  sortBy: z.enum(["createdAt", "title", "size"]).default("createdAt"),
+});
+
+export type DocumentsPaginationOptions = z.infer<
+  typeof DocumentsPaginationOptions
+>;
+
+export const GetAllDocumentsDTO = DocumentsSearchParams.merge(
+  DocumentsPaginationOptions
+);
+
+export type GetAllDocumentsDTO = z.infer<typeof GetAllDocumentsDTO>;
 
 export type DocumentResponseDTO = Pick<
   DocumentDAO,
